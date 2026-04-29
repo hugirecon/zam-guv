@@ -117,26 +117,7 @@ export default function LoginPage() {
             </button>
           </form>
 
-          {/* Demo credentials */}
-          <div className="mt-6 pt-6 border-t border-gray-200">
-            <p className="text-xs font-medium text-gray-500 uppercase mb-3">Demo credentials</p>
-            <div className="space-y-2">
-              <button
-                type="button"
-                onClick={() => { setEmail("admin@zam.guv"); setPassword("Admin@2026!"); }}
-                className="w-full text-left px-3 py-2 rounded-lg bg-gray-50 hover:bg-gray-100 text-sm text-gray-700 transition-colors"
-              >
-                <span className="font-medium">Admin:</span> admin@zam.guv
-              </button>
-              <button
-                type="button"
-                onClick={() => { setEmail("sarah.chen@company.gov"); setPassword("VP@Secure2026!"); }}
-                className="w-full text-left px-3 py-2 rounded-lg bg-gray-50 hover:bg-gray-100 text-sm text-gray-700 transition-colors"
-              >
-                <span className="font-medium">VP:</span> sarah.chen@company.gov
-              </button>
-            </div>
-          </div>
+
         </div>
 
         <p className="text-center text-slate-500 text-xs mt-6">
