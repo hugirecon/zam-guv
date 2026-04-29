@@ -225,10 +225,10 @@ export default function ContractDetailPage() {
           </Card>
 
           {/* AI Score Card (after submission) */}
-          {isSubmitted && proposal.aiScore !== null && (
+          {proposal?.status === "submitted" && proposal.aiScore !== null && (
             <AIScoreCard proposal={proposal} />
           )}
-          {isSubmitted && proposal.aiScore === null && (
+          {proposal?.status === "submitted" && proposal.aiScore === null && (
             <Card>
               <CardContent className="text-center py-8">
                 <div className="animate-spin w-6 h-6 border-2 border-blue-600 border-t-transparent rounded-full mx-auto mb-3" />
