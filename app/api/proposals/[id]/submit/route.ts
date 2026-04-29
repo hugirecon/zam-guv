@@ -25,9 +25,7 @@ export async function POST(
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
-  if (proposal.status === "submitted") {
-    return NextResponse.json({ error: "Already submitted" }, { status: 400 });
-  }
+  // VPs can resubmit — no block on already-submitted proposals
 
   // Mark as submitted
   const submitted = await prisma.proposal.update({

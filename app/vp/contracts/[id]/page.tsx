@@ -153,7 +153,7 @@ export default function ContractDetailPage() {
   }
 
   const requirements: string[] = JSON.parse(contract.requirements || "[]");
-  const isSubmitted = proposal?.status === "submitted";
+  const isSubmitted = false; // VPs can always edit and resubmit proposals
 
   return (
     <div className="space-y-6">
