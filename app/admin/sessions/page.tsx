@@ -9,8 +9,24 @@ interface Session {
   expiresAt: string;
   locked: boolean;
   lockedAt: string | null;
-  user: { name: string; email: string };
+  mode?: string;
+  user: { name: string; email: string; currentModule: number };
   _count: { proposals: number };
+}
+
+function ModuleBadge({ module }: { module: number }) {
+  const labels: Record<number, string> = { 1: "Module 1", 2: "Module 2", 3: "Module 3", 4: "Complete" };
+  const colors: Record<number, string> = {
+    1: "bg-gray-100 text-gray-600 border-gray-200",
+    2: "bg-amber-50 text-amber-700 border-amber-200",
+    3: "bg-blue-50 text-blue-700 border-blue-200",
+    4: "bg-emerald-50 text-emerald-700 border-emerald-200",
+  };
+  const label = labels[module] ?? `Module ${module}`;
+  const color = colors[module] ?? colors[1];
+  return (
+    <span className={`text-xs font-semibold border px-2 py-0.5 rounded-full ${color}`}>{label}</span>
+  );
 }
 
 export default function AdminSessions() {
@@ -63,7 +79,10 @@ export default function AdminSessions() {
                   return (
                     <tr key={s.id} className="hover:bg-gray-50">
                       <td className="px-6 py-4">
-                        <p className="text-sm font-medium text-gray-900">{s.user.name}</p>
+                        <div className="flex items-center gap-2 mb-0.5">
+                          <p className="text-sm font-medium text-gray-900">{s.user.name}</p>
+                          <ModuleBadge module={s.user.currentModule ?? 1} />
+                        </div>
                         <p className="text-xs text-gray-500">{s.user.email}</p>
                       </td>
                       <td className="px-6 py-4 text-sm text-gray-600">

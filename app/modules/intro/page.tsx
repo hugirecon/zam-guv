@@ -1,10 +1,44 @@
+"use client";
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 
-export const metadata = {
-  title: "Module 01 — KDT GovCon Introduction | Zam.guv",
-};
+interface Progress {
+  currentModule: number;
+  module1Done: boolean;
+  module2Done: boolean;
+  module3Done: boolean;
+}
 
 export default function IntroPage() {
+  const router = useRouter();
+  const [progress, setProgress] = useState<Progress | null>(null);
+  const [advancing, setAdvancing] = useState(false);
+
+  useEffect(() => {
+    fetch("/api/user/progress", { credentials: "include" })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => setProgress(data))
+      .catch(() => setProgress(null));
+  }, []);
+
+  const handleAdvance = async (action: "complete" | "skip") => {
+    setAdvancing(true);
+    try {
+      await fetch("/api/user/progress", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ action }),
+      });
+      router.push("/vp");
+    } catch {
+      setAdvancing(false);
+    }
+  };
+
+  const isAlreadyDone = progress?.module1Done || (progress?.currentModule ?? 1) > 1;
+
   return (
     <div className="min-h-screen bg-slate-50">
       {/* Top bar */}
@@ -21,9 +55,39 @@ export default function IntroPage() {
           <div className="flex items-center gap-3">
             <span className="text-xs font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2.5 py-1 rounded-full uppercase tracking-widest">Module 01</span>
             <span className="text-sm text-gray-500 hidden sm:block">KDT GovCon Introduction</span>
+            {/* Skip button in header */}
+            {progress && !isAlreadyDone && (
+              <button
+                onClick={() => handleAdvance("skip")}
+                disabled={advancing}
+                className="text-xs text-gray-500 hover:text-gray-700 border border-gray-300 hover:border-gray-400 px-3 py-1.5 rounded-lg transition-colors disabled:opacity-50"
+              >
+                {advancing ? "…" : "Skip →"}
+              </button>
+            )}
+            {isAlreadyDone && (
+              <Link href="/vp" className="text-xs text-emerald-700 bg-emerald-50 border border-emerald-300 px-3 py-1.5 rounded-lg font-medium hover:bg-emerald-100 transition-colors">
+                ← Return to where I left off
+              </Link>
+            )}
           </div>
         </div>
       </header>
+
+      {/* Already-completed banner */}
+      {isAlreadyDone && (
+        <div className="bg-emerald-50 border-b border-emerald-200">
+          <div className="max-w-4xl mx-auto px-6 py-3 flex items-center justify-between gap-4">
+            <div className="flex items-center gap-2">
+              <span className="text-emerald-600 text-sm">✓</span>
+              <span className="text-emerald-800 text-sm font-medium">You&apos;ve completed this module.</span>
+            </div>
+            <Link href="/vp" className="text-emerald-700 hover:text-emerald-900 text-sm font-semibold underline">
+              Go to Module 2 →
+            </Link>
+          </div>
+        </div>
+      )}
 
       <main className="max-w-4xl mx-auto px-6 py-12">
 
@@ -33,7 +97,7 @@ export default function IntroPage() {
           <h1 className="text-4xl font-bold text-gray-900 mb-4 leading-tight">KDT GovCon Introduction</h1>
           <div className="flex flex-wrap gap-4 text-sm text-gray-500">
             <span className="flex items-center gap-1.5"><span className="w-1.5 h-1.5 bg-emerald-500 rounded-full"></span>15–20 minutes</span>
-            <span className="flex items-center gap-1.5"><span className="w-1.5 h-1.5 bg-gray-300 rounded-full"></span>No login required</span>
+            <span className="flex items-center gap-1.5"><span className="w-1.5 h-1.5 bg-gray-300 rounded-full"></span>No login required to read</span>
             <span className="flex items-center gap-1.5"><span className="w-1.5 h-1.5 bg-gray-300 rounded-full"></span>Read before simulation</span>
           </div>
         </div>
@@ -81,7 +145,7 @@ export default function IntroPage() {
             </p>
             <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-5 my-6">
               <p className="text-emerald-800 font-medium">
-                Federal agencies post opportunities on <strong>SAM.gov</strong> (System for Award Management) — the official portal for every solicitation. Zam.guv simulates this with 52 realistic listings across KDT's core verticals.
+                Federal agencies post opportunities on <strong>SAM.gov</strong> (System for Award Management) — the official portal for every solicitation. Zam.guv simulates this with 52 realistic listings across KDT&apos;s core verticals.
               </p>
             </div>
           </div>
@@ -179,7 +243,7 @@ export default function IntroPage() {
 
             <div className="bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm">
               <div className="bg-amber-700 px-6 py-3">
-                <h3 className="text-white font-semibold text-sm uppercase tracking-wide">Set-Asides — If KDT doesn't hold the cert, you cannot bid</h3>
+                <h3 className="text-white font-semibold text-sm uppercase tracking-wide">Set-Asides — If KDT doesn&apos;t hold the cert, you cannot bid</h3>
               </div>
               <div className="divide-y divide-gray-100">
                 {[
@@ -248,7 +312,7 @@ export default function IntroPage() {
             <div className="flex-1 h-px bg-gray-200"></div>
           </div>
           <h2 className="text-2xl font-bold text-gray-900 mb-6">How to Read a Contract Listing</h2>
-          <p className="text-gray-600 mb-6">Check these fields in order — don't read every word on every listing, scan these key fields first.</p>
+          <p className="text-gray-600 mb-6">Check these fields in order — don&apos;t read every word on every listing, scan these key fields first.</p>
           <div className="bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm">
             {[
               ["1", "Title & Description", "What is the government actually buying?"],
@@ -277,35 +341,15 @@ export default function IntroPage() {
             <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">Part 4</span>
             <div className="flex-1 h-px bg-gray-200"></div>
           </div>
-          <h2 className="text-2xl font-bold text-gray-900 mb-4">What You're Being Assessed On</h2>
+          <h2 className="text-2xl font-bold text-gray-900 mb-4">What You&apos;re Being Assessed On</h2>
           <p className="text-gray-600 mb-6">Your session is AI-scored on four dimensions. These are the same dimensions KDT uses on real proposals. Write like you mean to win.</p>
 
           <div className="grid sm:grid-cols-2 gap-4">
             {[
-              {
-                num: "01",
-                title: "Strategic Clarity",
-                desc: "Did you pick the right opportunities?",
-                color: "blue",
-              },
-              {
-                num: "02",
-                title: "Persuasion",
-                desc: "Is your writing compelling to a government evaluator?",
-                color: "emerald",
-              },
-              {
-                num: "03",
-                title: "Technical Credibility",
-                desc: "Does your proposal show real understanding of the requirement?",
-                color: "purple",
-              },
-              {
-                num: "04",
-                title: "Competitive Awareness",
-                desc: "Did you address set-asides, eval criteria, competitive factors?",
-                color: "amber",
-              },
+              { num: "01", title: "Strategic Clarity", desc: "Did you pick the right opportunities?" },
+              { num: "02", title: "Persuasion", desc: "Is your writing compelling to a government evaluator?" },
+              { num: "03", title: "Technical Credibility", desc: "Does your proposal show real understanding of the requirement?" },
+              { num: "04", title: "Competitive Awareness", desc: "Did you address set-asides, eval criteria, competitive factors?" },
             ].map(({ num, title, desc }) => (
               <div key={num} className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm">
                 <p className="text-3xl font-black text-gray-100 mb-2">{num}</p>
@@ -316,19 +360,58 @@ export default function IntroPage() {
           </div>
         </section>
 
-        {/* CTA */}
-        <div className="bg-gradient-to-r from-blue-950 to-slate-900 rounded-2xl p-8 text-center">
-          <h2 className="text-xl font-bold text-white mb-2">Ready for Module 2?</h2>
-          <p className="text-blue-200 mb-6 text-sm">
-            Next up: the full process walkthrough. You'll use Zam.guv hands-on — no timer, no pressure.
-          </p>
-          <Link
-            href="/modules/training"
-            className="inline-block bg-amber-500 hover:bg-amber-400 text-white font-bold py-3 px-8 rounded-lg transition-colors"
-          >
-            Proceed to Module 2 →
-          </Link>
-        </div>
+        {/* CTA — Module 1 Complete */}
+        {progress && !isAlreadyDone ? (
+          <div className="bg-gradient-to-r from-blue-950 to-slate-900 rounded-2xl p-8 text-center">
+            <h2 className="text-xl font-bold text-white mb-2">Ready for Module 2?</h2>
+            <p className="text-blue-200 mb-6 text-sm">
+              Next up: the full process walkthrough. You&apos;ll use Zam.guv hands-on — no timer, no pressure.
+            </p>
+            <div className="flex flex-col sm:flex-row gap-3 justify-center">
+              <button
+                onClick={() => handleAdvance("complete")}
+                disabled={advancing}
+                className="inline-block bg-amber-500 hover:bg-amber-400 disabled:opacity-50 text-white font-bold py-3 px-8 rounded-lg transition-colors"
+              >
+                {advancing ? "Saving…" : "Mark Complete & Proceed to Module 2 →"}
+              </button>
+              <button
+                onClick={() => handleAdvance("skip")}
+                disabled={advancing}
+                className="inline-block bg-transparent border border-blue-400 hover:border-blue-200 disabled:opacity-50 text-blue-300 hover:text-blue-100 font-medium py-3 px-6 rounded-lg transition-colors text-sm"
+              >
+                Skip Module 2 → Go straight to Simulation
+              </button>
+            </div>
+          </div>
+        ) : isAlreadyDone ? (
+          <div className="bg-gradient-to-r from-emerald-900 to-slate-900 rounded-2xl p-8 text-center">
+            <h2 className="text-xl font-bold text-white mb-2">Module 1 Complete ✓</h2>
+            <p className="text-emerald-200 mb-6 text-sm">
+              You&apos;ve already completed this module. Continue where you left off.
+            </p>
+            <Link
+              href="/vp"
+              className="inline-block bg-emerald-500 hover:bg-emerald-400 text-white font-bold py-3 px-8 rounded-lg transition-colors"
+            >
+              ← Return to Training Portal
+            </Link>
+          </div>
+        ) : (
+          /* Not logged in — show static link */
+          <div className="bg-gradient-to-r from-blue-950 to-slate-900 rounded-2xl p-8 text-center">
+            <h2 className="text-xl font-bold text-white mb-2">Ready for Module 2?</h2>
+            <p className="text-blue-200 mb-6 text-sm">
+              Next up: the full process walkthrough. You&apos;ll use Zam.guv hands-on — no timer, no pressure.
+            </p>
+            <Link
+              href="/modules/training"
+              className="inline-block bg-amber-500 hover:bg-amber-400 text-white font-bold py-3 px-8 rounded-lg transition-colors"
+            >
+              Proceed to Module 2 →
+            </Link>
+          </div>
+        )}
 
       </main>
     </div>

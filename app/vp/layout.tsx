@@ -3,6 +3,60 @@ import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { SessionTimer } from "@/components/vp/SessionTimer";
 
+function TrainingBanner() {
+  const router = useRouter();
+  const [advancing, setAdvancing] = useState(false);
+
+  const handleBeginSimulation = async () => {
+    setAdvancing(true);
+    try {
+      await fetch("/api/user/progress", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ action: "complete" }),
+      });
+      // Log out first so next login creates assessment session
+      await fetch("/api/auth/logout", { method: "POST" });
+      router.replace("/login?ready=true");
+    } catch {
+      setAdvancing(false);
+    }
+  };
+
+  return (
+    <div style={{
+      background: "#faf3d1",
+      borderBottom: "2px solid #e6c84a",
+      padding: "8px 16px",
+    }}>
+      <div style={{ maxWidth: "1400px", margin: "0 auto", display: "flex", alignItems: "center", justifyContent: "space-between", gap: "12px", flexWrap: "wrap" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+          <span style={{ fontSize: "13px", fontWeight: "700", color: "#7a4800", textTransform: "uppercase", letterSpacing: "0.5px" }}>MODULE 2 — Training Mode</span>
+          <span style={{ fontSize: "13px", color: "#7a4800" }}>· No timer · Browse and practice freely</span>
+        </div>
+        <button
+          onClick={handleBeginSimulation}
+          disabled={advancing}
+          style={{
+            background: advancing ? "#999" : "#b22234",
+            color: "#ffffff",
+            border: "none",
+            borderRadius: "3px",
+            padding: "6px 16px",
+            fontSize: "13px",
+            fontWeight: "700",
+            cursor: advancing ? "not-allowed" : "pointer",
+            whiteSpace: "nowrap",
+          }}
+        >
+          {advancing ? "Saving…" : "Begin 30-Minute Simulation →"}
+        </button>
+      </div>
+    </div>
+  );
+}
+
 interface SessionInfo {
   id: string;
   startedAt: string;
@@ -245,6 +299,9 @@ export default function VPLayout({ children }: { children: React.ReactNode }) {
           </div>
         </nav>
       </header>
+
+      {/* Module 2 training banner */}
+      {isTraining && <TrainingBanner />}
 
       {/* Main content */}
       <main style={{ maxWidth: "1400px", margin: "0 auto", padding: "0 16px" }}>

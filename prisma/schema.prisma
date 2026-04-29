@@ -17,6 +17,12 @@ model User {
   passwordHash String
   createdAt    DateTime @default(now())
 
+  // Module progression
+  currentModule Int     @default(1)   // 1 = intro, 2 = training, 3 = simulation, 4 = complete
+  module1Done   Boolean @default(false)
+  module2Done   Boolean @default(false)
+  module3Done   Boolean @default(false)
+
   sessions  Session[]
   proposals Proposal[]
 }

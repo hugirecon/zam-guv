@@ -4,7 +4,7 @@ import { signToken, getOrCreateVPSession } from "@/lib/auth";
 import bcrypt from "bcryptjs";
 
 export async function POST(req: NextRequest) {
-  const { email, password, trainingMode } = await req.json();
+  const { email, password } = await req.json();
 
   const user = await prisma.user.findUnique({ where: { email } });
   if (!user) {
@@ -18,7 +18,9 @@ export async function POST(req: NextRequest) {
 
   let sessionId: string | undefined;
   if (user.role === "vp") {
-    const session = await getOrCreateVPSession(user.id, !!trainingMode);
+    // Session type is derived from currentModule, not from the request flag
+    const trainingMode = user.currentModule <= 2;
+    const session = await getOrCreateVPSession(user.id, trainingMode);
     sessionId = session.id;
   }
 
@@ -27,6 +29,7 @@ export async function POST(req: NextRequest) {
   const res = NextResponse.json({
     user: { id: user.id, name: user.name, email: user.email, role: user.role },
     sessionId,
+    currentModule: user.currentModule,
   });
 
   res.cookies.set("zam-token", token, {

@@ -37,6 +37,14 @@ export async function POST(
     },
   });
 
+  // If this is an assessment session, advance the user to module 4 (complete)
+  if (proposal.session.mode === "assessment") {
+    await prisma.user.updateMany({
+      where: { id: proposal.userId, currentModule: { lte: 3 } },
+      data: { currentModule: 4, module3Done: true },
+    });
+  }
+
   // Score synchronously (Vercel kills fire-and-forget after response)
   await scoreProposalAsync(id, proposal).catch(console.error);
 

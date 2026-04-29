@@ -11,7 +11,7 @@ export async function GET() {
   const sessions = await prisma.session.findMany({
     orderBy: { startedAt: "desc" },
     include: {
-      user: { select: { name: true, email: true } },
+      user: { select: { name: true, email: true, currentModule: true } },
       _count: { select: { proposals: true } },
     },
   });
