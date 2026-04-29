@@ -37,10 +37,12 @@ export async function POST(
     },
   });
 
-  // Trigger async AI scoring (fire and forget for now)
-  scoreProposalAsync(id, proposal).catch(console.error);
+  // Score synchronously (Vercel kills fire-and-forget after response)
+  await scoreProposalAsync(id, proposal).catch(console.error);
 
-  return NextResponse.json(submitted);
+  // Re-fetch with scores
+  const scored = await prisma.proposal.findUnique({ where: { id } });
+  return NextResponse.json(scored ?? submitted);
 }
 
 async function scoreProposalAsync(proposalId: string, proposal: {

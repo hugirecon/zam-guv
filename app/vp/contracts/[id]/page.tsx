@@ -220,7 +220,7 @@ export default function ContractDetailPage() {
       await handleSave();
       return;
     }
-    if (!confirm("Submit this proposal? You cannot edit it after submission.")) return;
+    // Resubmission is allowed — no confirm dialog needed
     setSubmitting(true);
     try {
       await fetch("/api/proposals", {
