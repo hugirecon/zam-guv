@@ -1,0 +1,94 @@
+// Zam.guv — Government Contracting Portal
+// 30-minute VP assessment sessions
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  name         String
+  role         String   // "vp" | "admin"
+  passwordHash String
+  createdAt    DateTime @default(now())
+
+  sessions  Session[]
+  proposals Proposal[]
+}
+
+model Contract {
+  id               String   @id @default(cuid())
+  solicNumber      String   @unique  // e.g. "FA8617-26-R-0021"
+  title            String
+  agency           String
+  subAgency        String?
+  description      String
+  requirements     String   // JSON array of key requirements
+  naicsCode        String
+  setAside         String?  // "8(a)" | "SDVOSB" | "HUBZone" | "WOSB" | "SB" | "Unrestricted"
+  valueMin         Float
+  valueMax         Float
+  dueDate          DateTime
+  postedDate       DateTime @default(now())
+  pob              String   // Place of performance
+  securityClear    String   // "None" | "Secret" | "Top Secret" | "TS/SCI"
+  type             String   // "FFP" | "T&M" | "CPFF" | "IDIQ" | "BPA"
+  status           String   @default("active") // "active" | "closed" | "awarded"
+
+  proposals Proposal[]
+}
+
+model Session {
+  id        String   @id @default(cuid())
+  userId    String
+  token     String   @unique @default(cuid())
+  startedAt DateTime @default(now())
+  expiresAt DateTime // startedAt + 30 minutes
+  locked    Boolean  @default(false)
+  lockedAt  DateTime?
+
+  user      User       @relation(fields: [userId], references: [id])
+  proposals Proposal[]
+}
+
+model Proposal {
+  id              String   @id @default(cuid())
+  contractId      String
+  userId          String
+  sessionId       String
+  
+  // Proposal content
+  executiveSummary   String
+  technicalApproach  String
+  managementApproach String
+  pricingNarrative   String
+  pastPerformance    String
+  
+  // Pricing
+  proposedValue   Float
+  
+  // Status
+  status          String   @default("draft") // "draft" | "submitted"
+  submittedAt     DateTime?
+  autoSubmitted   Boolean  @default(false) // true if session expired mid-draft
+  
+  // AI Scoring (populated after submission)
+  aiScore         Float?   // 0-100
+  aiScoreBreakdown String?  // JSON: { technical, management, pricing, past_performance, compliance }
+  aiFeedback      String?
+  aiScoredAt      DateTime?
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  contract Contract @relation(fields: [contractId], references: [id])
+  user     User     @relation(fields: [userId], references: [id])
+  session  Session  @relation(fields: [sessionId], references: [id])
+
+  @@unique([contractId, userId]) // one proposal per contract per VP
+}
