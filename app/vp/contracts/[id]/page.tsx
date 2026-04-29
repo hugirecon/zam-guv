@@ -245,9 +245,9 @@ export default function ContractDetailPage() {
               <div className="flex items-center justify-between">
                 <div>
                   <h2 className="font-semibold text-gray-900">Proposal</h2>
-                  {isSubmitted ? (
+                  {proposal?.status === "submitted" ? (
                     <p className="text-sm text-green-600 font-medium mt-0.5">
-                      ✓ Submitted {proposal.autoSubmitted ? "(auto-submitted at session end)" : ""}
+                      ✓ Submitted {proposal?.autoSubmitted ? "(auto-submitted at session end)" : ""}
                     </p>
                   ) : (
                     <p className="text-sm text-gray-500 mt-0.5">Draft — auto-submitted when session expires</p>
