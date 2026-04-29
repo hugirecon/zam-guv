@@ -17,6 +17,7 @@ export async function GET() {
         startedAt: session.startedAt,
         expiresAt: session.expiresAt,
         locked: session.locked,
+        mode: session.mode,
       };
     }
   }

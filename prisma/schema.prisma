@@ -48,9 +48,10 @@ model Session {
   userId    String
   token     String   @unique @default(cuid())
   startedAt DateTime @default(now())
-  expiresAt DateTime // startedAt + 30 minutes
+  expiresAt DateTime // startedAt + 30 minutes (or 24h for training)
   locked    Boolean  @default(false)
   lockedAt  DateTime?
+  mode      String   @default("assessment") // "assessment" | "training"
 
   user      User       @relation(fields: [userId], references: [id])
   proposals Proposal[]

@@ -8,6 +8,7 @@ interface SessionInfo {
   startedAt: string;
   expiresAt: string;
   locked: boolean;
+  mode?: string;
 }
 
 interface User {
@@ -116,7 +117,12 @@ export default function VPLayout({ children }: { children: React.ReactNode }) {
             </div>
 
             <div className="flex items-center gap-4">
-              {session && !session.locked && (
+              {session && !session.locked && session.mode === "training" && (
+                <span className="text-xs font-semibold text-amber-600 bg-amber-50 border border-amber-200 px-3 py-1.5 rounded-full">
+                  Training Mode — No Timer
+                </span>
+              )}
+              {session && !session.locked && session.mode !== "training" && (
                 <SessionTimer
                   expiresAt={session.expiresAt}
                   sessionId={session.id}

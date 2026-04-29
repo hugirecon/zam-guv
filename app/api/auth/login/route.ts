@@ -4,7 +4,7 @@ import { signToken, getOrCreateVPSession } from "@/lib/auth";
 import bcrypt from "bcryptjs";
 
 export async function POST(req: NextRequest) {
-  const { email, password } = await req.json();
+  const { email, password, trainingMode } = await req.json();
 
   const user = await prisma.user.findUnique({ where: { email } });
   if (!user) {
@@ -18,7 +18,7 @@ export async function POST(req: NextRequest) {
 
   let sessionId: string | undefined;
   if (user.role === "vp") {
-    const session = await getOrCreateVPSession(user.id);
+    const session = await getOrCreateVPSession(user.id, !!trainingMode);
     sessionId = session.id;
   }
 
