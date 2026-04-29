@@ -1,9 +1,6 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useRouter, useParams } from "next/navigation";
-import { Badge } from "@/components/ui/Badge";
-import { Button } from "@/components/ui/Button";
-import { Card, CardHeader, CardContent } from "@/components/ui/Card";
 
 interface Contract {
   id: string;
@@ -53,6 +50,102 @@ function formatValue(min: number, max: number) {
   return `${fmt(min)} – ${fmt(max)}`;
 }
 
+// Sidebar nav link
+function SidebarNavLink({ label, sectionRef }: { label: string; sectionRef: React.RefObject<HTMLElement | null> }) {
+  const handleClick = () => {
+    sectionRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
+  return (
+    <button
+      onClick={handleClick}
+      style={{
+        display: "block",
+        width: "100%",
+        textAlign: "left",
+        padding: "8px 12px",
+        fontSize: "13px",
+        color: "#005ea2",
+        background: "transparent",
+        border: "none",
+        cursor: "pointer",
+        textDecoration: "underline",
+        borderBottom: "1px solid #dfe1e2",
+      }}
+    >
+      {label}
+    </button>
+  );
+}
+
+// AI Score Card
+function AIScoreCard({ proposal }: { proposal: Proposal }) {
+  const breakdown = proposal.aiScoreBreakdown ? JSON.parse(proposal.aiScoreBreakdown) : null;
+  const feedback = proposal.aiFeedback ? JSON.parse(proposal.aiFeedback) : null;
+  const score = proposal.aiScore || 0;
+
+  const scoreColor = score >= 80 ? "#168216" : score >= 60 ? "#7a4800" : "#b22234";
+  const scoreBg = score >= 80 ? "#e7f2e7" : score >= 60 ? "#faf3d1" : "#fde9e9";
+  const scoreBorder = score >= 80 ? "#9ad29a" : score >= 60 ? "#e6c84a" : "#f5aeae";
+
+  return (
+    <div style={{ border: `1px solid ${scoreBorder}`, background: scoreBg, borderRadius: "2px", padding: "16px", marginTop: "16px" }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "12px" }}>
+        <span style={{ fontSize: "14px", fontWeight: "700", color: "#1b1b1b" }}>AI Assessment Score</span>
+        <span style={{ fontSize: "24px", fontWeight: "900", color: scoreColor }}>{score.toFixed(0)}/100</span>
+      </div>
+      {breakdown && (
+        <div style={{ marginBottom: "12px" }}>
+          {Object.entries(breakdown).map(([key, val]) => (
+            <div key={key} style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "6px" }}>
+              <span style={{ fontSize: "11px", color: "#565c65", width: "110px", textTransform: "capitalize" }}>{key.replace("_", " ")}</span>
+              <div style={{ flex: 1, background: "#dfe1e2", borderRadius: "2px", height: "6px" }}>
+                <div style={{ width: `${val}%`, background: "#005ea2", height: "6px", borderRadius: "2px" }} />
+              </div>
+              <span style={{ fontSize: "11px", fontWeight: "700", color: "#1b1b1b", width: "28px", textAlign: "right" }}>{val as number}</span>
+            </div>
+          ))}
+        </div>
+      )}
+      {feedback && (
+        <div>
+          {feedback.recommendation && (
+            <span style={{
+              display: "inline-block",
+              background: "#e8f1f9",
+              color: "#1a4480",
+              border: "1px solid #b9d0e8",
+              borderRadius: "2px",
+              padding: "2px 10px",
+              fontSize: "12px",
+              fontWeight: "700",
+              marginBottom: "8px",
+            }}>
+              {feedback.recommendation}
+            </span>
+          )}
+          {feedback.feedback && <p style={{ fontSize: "13px", color: "#1b1b1b", marginBottom: "8px" }}>{feedback.feedback}</p>}
+          {feedback.strengths?.length > 0 && (
+            <div style={{ marginBottom: "8px" }}>
+              <p style={{ fontSize: "12px", fontWeight: "700", color: "#1b1b1b", marginBottom: "4px" }}>Strengths</p>
+              {feedback.strengths.map((s: string, i: number) => (
+                <p key={i} style={{ fontSize: "12px", color: "#1b1b1b", margin: "2px 0" }}><span style={{ color: "#168216" }}>+</span> {s}</p>
+              ))}
+            </div>
+          )}
+          {feedback.weaknesses?.length > 0 && (
+            <div>
+              <p style={{ fontSize: "12px", fontWeight: "700", color: "#1b1b1b", marginBottom: "4px" }}>Areas to Improve</p>
+              {feedback.weaknesses.map((w: string, i: number) => (
+                <p key={i} style={{ fontSize: "12px", color: "#1b1b1b", margin: "2px 0" }}><span style={{ color: "#b22234" }}>−</span> {w}</p>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function ContractDetailPage() {
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
@@ -70,6 +163,13 @@ export default function ContractDetailPage() {
   const [submitting, setSubmitting] = useState(false);
   const [saveStatus, setSaveStatus] = useState<"" | "saved" | "error">("");
   const [activeTab, setActiveTab] = useState(0);
+
+  // Section refs for sidebar nav
+  const generalRef = useRef<HTMLDivElement>(null);
+  const classificationRef = useRef<HTMLDivElement>(null);
+  const descriptionRef = useRef<HTMLDivElement>(null);
+  const contactRef = useRef<HTMLDivElement>(null);
+  const proposalRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     fetch(`/api/contracts/${id}`)
@@ -123,7 +223,6 @@ export default function ContractDetailPage() {
     if (!confirm("Submit this proposal? You cannot edit it after submission.")) return;
     setSubmitting(true);
     try {
-      // Save latest first
       await fetch("/api/proposals", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -137,7 +236,7 @@ export default function ContractDetailPage() {
       if (!res.ok) throw new Error("Submit failed");
       const submitted = await res.json();
       setProposal(submitted);
-    } catch (e) {
+    } catch {
       alert("Submission failed. Please try again.");
     } finally {
       setSubmitting(false);
@@ -146,181 +245,358 @@ export default function ContractDetailPage() {
 
   if (!contract) {
     return (
-      <div className="flex justify-center py-16">
+      <div style={{ display: "flex", justifyContent: "center", padding: "64px 0" }}>
         <div className="animate-spin w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full" />
       </div>
     );
   }
 
   const requirements: string[] = JSON.parse(contract.requirements || "[]");
-  const isSubmitted = false; // VPs can always edit and resubmit proposals
+  const isSubmitted = false;
+
+  const dueDate = new Date(contract.dueDate).toLocaleDateString("en-US", {
+    month: "long",
+    day: "2-digit",
+    year: "numeric",
+  });
 
   return (
-    <div className="space-y-6">
-      {/* Back */}
-      <button
-        onClick={() => router.back()}
-        className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-800 transition-colors"
-      >
-        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-        </svg>
-        Back to Contracts
-      </button>
-
-      <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
-        {/* Contract info panel */}
-        <div className="xl:col-span-1 space-y-4">
-          <Card>
-            <CardHeader>
-              <p className="text-xs text-gray-500 font-mono">{contract.solicNumber}</p>
-              <h1 className="text-lg font-bold text-gray-900 mt-1">{contract.title}</h1>
-              <p className="text-sm text-gray-500">{contract.agency}{contract.subAgency ? ` · ${contract.subAgency}` : ""}</p>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex flex-wrap gap-2">
-                <Badge variant="info">{contract.setAside || "Unrestricted"}</Badge>
-                <Badge>{contract.type}</Badge>
-                {contract.securityClear !== "None" && <Badge variant="danger">{contract.securityClear}</Badge>}
-              </div>
-
-              <div className="space-y-2 text-sm">
-                <div className="flex justify-between">
-                  <span className="text-gray-500">Value Range</span>
-                  <span className="font-medium text-gray-900">{formatValue(contract.valueMin, contract.valueMax)}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-500">Due Date</span>
-                  <span className="font-medium text-gray-900">{new Date(contract.dueDate).toLocaleDateString()}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-500">NAICS</span>
-                  <span className="font-medium text-gray-900">{contract.naicsCode}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-500">Location</span>
-                  <span className="font-medium text-gray-900 text-right max-w-36">{contract.pob}</span>
-                </div>
-              </div>
-
-              <div>
-                <p className="text-sm font-medium text-gray-700 mb-2">Description</p>
-                <p className="text-sm text-gray-600">{contract.description}</p>
-              </div>
-
-              {requirements.length > 0 && (
-                <div>
-                  <p className="text-sm font-medium text-gray-700 mb-2">Key Requirements</p>
-                  <ul className="space-y-1">
-                    {requirements.map((req, i) => (
-                      <li key={i} className="flex items-start gap-2 text-sm text-gray-600">
-                        <span className="text-blue-500 mt-0.5">▸</span>
-                        {req}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-
-          {/* AI Score Card (after submission) */}
-          {proposal?.status === "submitted" && proposal.aiScore !== null && (
-            <AIScoreCard proposal={proposal} />
-          )}
-          {proposal?.status === "submitted" && proposal.aiScore === null && (
-            <Card>
-              <CardContent className="text-center py-8">
-                <div className="animate-spin w-6 h-6 border-2 border-blue-600 border-t-transparent rounded-full mx-auto mb-3" />
-                <p className="text-sm text-gray-600">AI scoring in progress…</p>
-              </CardContent>
-            </Card>
-          )}
+    <div style={{ display: "flex", gap: "0", alignItems: "flex-start", paddingTop: "0" }}>
+      {/* LEFT SIDEBAR — sticky nav */}
+      <aside style={{
+        width: "240px",
+        minWidth: "240px",
+        position: "sticky",
+        top: "120px",
+        background: "#ffffff",
+        border: "1px solid #dfe1e2",
+        marginTop: "20px",
+        marginBottom: "20px",
+        alignSelf: "flex-start",
+      }}>
+        {/* Agency seal placeholder */}
+        <div style={{ padding: "20px 16px", borderBottom: "1px solid #dfe1e2", textAlign: "center" }}>
+          <div style={{
+            width: "72px",
+            height: "72px",
+            borderRadius: "50%",
+            background: "#dfe1e2",
+            border: "2px solid #c9c9c9",
+            margin: "0 auto 10px",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+          }}>
+            <span style={{ fontSize: "24px" }}>🏛️</span>
+          </div>
+          <p style={{ fontSize: "11px", color: "#565c65", textTransform: "uppercase", letterSpacing: "0.5px", fontWeight: "700", margin: 0 }}>
+            Contract Opportunity
+          </p>
         </div>
 
-        {/* Proposal editor */}
-        <div className="xl:col-span-2">
-          <Card>
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <div>
-                  <h2 className="font-semibold text-gray-900">Proposal</h2>
-                  {proposal?.status === "submitted" ? (
-                    <p className="text-sm text-green-600 font-medium mt-0.5">
-                      ✓ Submitted {proposal?.autoSubmitted ? "(auto-submitted at session end)" : ""}
-                    </p>
-                  ) : (
-                    <p className="text-sm text-gray-500 mt-0.5">Draft — auto-submitted when session expires</p>
-                  )}
-                </div>
-                {!isSubmitted && (
-                  <div className="flex items-center gap-2">
-                    {saveStatus === "saved" && <span className="text-xs text-green-600">✓ Saved</span>}
-                    {saveStatus === "error" && <span className="text-xs text-red-600">Save failed</span>}
-                    <Button variant="outline" size="sm" onClick={handleSave} loading={saving}>
-                      Save Draft
-                    </Button>
-                    <Button size="sm" onClick={handleSubmit} loading={submitting}>
-                      Submit Proposal
-                    </Button>
-                  </div>
+        {/* Section navigation */}
+        <div>
+          <div style={{ padding: "8px 12px", fontSize: "11px", fontWeight: "700", color: "#565c65", textTransform: "uppercase", letterSpacing: "0.5px", background: "#f0f0f0", borderBottom: "1px solid #dfe1e2" }}>
+            Sections
+          </div>
+          <SidebarNavLink label="General Information" sectionRef={generalRef} />
+          <SidebarNavLink label="Classification" sectionRef={classificationRef} />
+          <SidebarNavLink label="Description" sectionRef={descriptionRef} />
+          <SidebarNavLink label="Contact Information" sectionRef={contactRef} />
+          <SidebarNavLink label="Submit Proposal" sectionRef={proposalRef} />
+        </div>
+
+        {/* Back link */}
+        <div style={{ padding: "12px" }}>
+          <button
+            onClick={() => router.back()}
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "6px",
+              fontSize: "13px",
+              color: "#005ea2",
+              background: "transparent",
+              border: "none",
+              cursor: "pointer",
+              textDecoration: "underline",
+              padding: 0,
+            }}
+          >
+            ← Back to Search
+          </button>
+        </div>
+      </aside>
+
+      {/* RIGHT — Contract detail content */}
+      <div style={{ flex: 1, minWidth: 0, padding: "20px 24px 40px" }}>
+        {/* Notice type + title */}
+        <div style={{ marginBottom: "20px" }}>
+          <p style={{ fontSize: "13px", color: "#565c65", marginBottom: "6px", fontWeight: "600", textTransform: "uppercase", letterSpacing: "0.5px" }}>
+            {contract.type || "Solicitation"} — Contract Opportunity
+          </p>
+          <h1 style={{ fontSize: "24px", fontWeight: "900", color: "#1b1b1b", margin: "0 0 12px", lineHeight: "1.2" }}>
+            {contract.title}
+          </h1>
+          <div style={{ display: "flex", alignItems: "center", gap: "10px", flexWrap: "wrap" }}>
+            {/* Active badge */}
+            <span style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "4px",
+              background: "#e7f2e7",
+              color: "#168216",
+              border: "1px solid #9ad29a",
+              borderRadius: "2px",
+              padding: "3px 10px",
+              fontSize: "13px",
+              fontWeight: "700",
+            }}>
+              ● ACTIVE
+            </span>
+            {/* Contract type badge */}
+            <span style={{
+              display: "inline-block",
+              background: "#e8f1f9",
+              color: "#1a4480",
+              border: "1px solid #b9d0e8",
+              borderRadius: "2px",
+              padding: "3px 10px",
+              fontSize: "12px",
+              fontWeight: "700",
+              textTransform: "uppercase",
+              letterSpacing: "0.3px",
+            }}>
+              Contract Opportunity
+            </span>
+          </div>
+        </div>
+
+        {/* General Information */}
+        <div ref={generalRef} style={{ background: "#ffffff", border: "1px solid #dfe1e2", marginBottom: "16px" }}>
+          <div style={{ background: "#1b2a6b", color: "#ffffff", padding: "10px 16px" }}>
+            <h2 style={{ fontSize: "15px", fontWeight: "700", margin: 0 }}>General Information</h2>
+          </div>
+          <div style={{ padding: "16px" }}>
+            <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "14px" }}>
+              <tbody>
+                <InfoRow label="Notice ID" value={contract.solicNumber} />
+                <InfoRow label="Department / Ind. Agency" value={contract.agency} />
+                {contract.subAgency && <InfoRow label="Sub-Tier" value={contract.subAgency} />}
+                <InfoRow label="Contract Opportunity Type" value={contract.type || "Solicitation"} />
+                <InfoRow label="Date Offers Due" value={dueDate} />
+                {(contract.valueMin > 0 || contract.valueMax > 0) && (
+                  <InfoRow label="Contract Value" value={formatValue(contract.valueMin, contract.valueMax)} />
+                )}
+                <InfoRow label="Place of Performance" value={contract.pob} />
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        {/* Classification */}
+        <div ref={classificationRef} style={{ background: "#ffffff", border: "1px solid #dfe1e2", marginBottom: "16px" }}>
+          <div style={{ background: "#1b2a6b", color: "#ffffff", padding: "10px 16px" }}>
+            <h2 style={{ fontSize: "15px", fontWeight: "700", margin: 0 }}>Classification</h2>
+          </div>
+          <div style={{ padding: "16px" }}>
+            <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "14px" }}>
+              <tbody>
+                <InfoRow label="NAICS Code" value={contract.naicsCode} />
+                <InfoRow label="Set Aside" value={contract.setAside || "Unrestricted"} />
+                <InfoRow label="Contract Type" value={contract.type} />
+                <InfoRow label="Security Clearance" value={contract.securityClear} />
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        {/* Description */}
+        <div ref={descriptionRef} style={{ background: "#ffffff", border: "1px solid #dfe1e2", marginBottom: "16px" }}>
+          <div style={{ background: "#1b2a6b", color: "#ffffff", padding: "10px 16px" }}>
+            <h2 style={{ fontSize: "15px", fontWeight: "700", margin: 0 }}>Description</h2>
+          </div>
+          <div style={{ padding: "20px 16px" }}>
+            <p style={{ fontSize: "14px", color: "#1b1b1b", lineHeight: "1.6", margin: "0 0 16px" }}>
+              {contract.description}
+            </p>
+            {requirements.length > 0 && (
+              <div>
+                <p style={{ fontSize: "14px", fontWeight: "700", color: "#1b1b1b", marginBottom: "10px" }}>Key Requirements:</p>
+                <ul style={{ margin: 0, paddingLeft: "20px" }}>
+                  {requirements.map((req, i) => (
+                    <li key={i} style={{ fontSize: "14px", color: "#1b1b1b", lineHeight: "1.6", marginBottom: "6px" }}>
+                      {req}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Contact Information */}
+        <div ref={contactRef} style={{ background: "#ffffff", border: "1px solid #dfe1e2", marginBottom: "16px" }}>
+          <div style={{ background: "#1b2a6b", color: "#ffffff", padding: "10px 16px" }}>
+            <h2 style={{ fontSize: "15px", fontWeight: "700", margin: 0 }}>Contact Information</h2>
+          </div>
+          <div style={{ padding: "16px" }}>
+            <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "14px" }}>
+              <tbody>
+                <InfoRow label="Primary POC" value="Contracting Officer" />
+                <InfoRow label="Organization" value={contract.agency} />
+                <InfoRow label="Email" value="[Available upon registration]" />
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        {/* ===== KDT Simulation — Submit Proposal ===== */}
+        <div ref={proposalRef} style={{ marginTop: "32px" }}>
+          {/* Banner */}
+          <div style={{
+            background: "#005ea2",
+            color: "#ffffff",
+            padding: "16px 20px",
+            marginBottom: "0",
+            borderRadius: "2px 2px 0 0",
+          }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+              <span style={{ fontSize: "20px" }}>📋</span>
+              <div>
+                <p style={{ fontSize: "15px", fontWeight: "700", margin: "0 0 2px" }}>This is a ZAM.GOV simulation.</p>
+                <p style={{ fontSize: "13px", margin: 0, opacity: 0.9 }}>Submit your proposal below. This is a training exercise — Knight Division Tactical.</p>
+              </div>
+            </div>
+          </div>
+
+          <div style={{ background: "#ffffff", border: "1px solid #dfe1e2", borderTop: "none" }}>
+            <div style={{ padding: "16px 20px", borderBottom: "1px solid #dfe1e2", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <div>
+                <h3 style={{ fontSize: "16px", fontWeight: "700", color: "#1b1b1b", margin: "0 0 4px" }}>Proposal Submission</h3>
+                {proposal?.status === "submitted" ? (
+                  <p style={{ fontSize: "13px", color: "#168216", fontWeight: "600", margin: 0 }}>
+                    ✓ Submitted {proposal?.autoSubmitted ? "(auto-submitted at session end)" : ""}
+                  </p>
+                ) : (
+                  <p style={{ fontSize: "13px", color: "#565c65", margin: 0 }}>Draft — auto-submitted when session expires</p>
                 )}
               </div>
-            </CardHeader>
-
-            {/* Tabs */}
-            <div className="border-b border-gray-200 px-6">
-              <nav className="flex gap-1 -mb-px overflow-x-auto">
-                {FIELDS.map((f, i) => (
+              {!isSubmitted && (
+                <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                  {saveStatus === "saved" && <span style={{ fontSize: "12px", color: "#168216" }}>✓ Saved</span>}
+                  {saveStatus === "error" && <span style={{ fontSize: "12px", color: "#b22234" }}>Save failed</span>}
                   <button
-                    key={f.key}
-                    onClick={() => setActiveTab(i)}
-                    className={`py-3 px-3 text-sm font-medium whitespace-nowrap border-b-2 transition-colors ${
-                      activeTab === i
-                        ? "border-blue-600 text-blue-700"
-                        : "border-transparent text-gray-500 hover:text-gray-700"
-                    }`}
+                    onClick={handleSave}
+                    disabled={saving}
+                    style={{
+                      background: "#ffffff",
+                      color: "#005ea2",
+                      border: "2px solid #005ea2",
+                      borderRadius: "2px",
+                      padding: "8px 16px",
+                      fontSize: "13px",
+                      fontWeight: "700",
+                      cursor: saving ? "not-allowed" : "pointer",
+                      opacity: saving ? 0.7 : 1,
+                    }}
                   >
-                    {f.label}
+                    {saving ? "Saving…" : "Save Draft"}
                   </button>
-                ))}
-                <button
-                  onClick={() => setActiveTab(FIELDS.length)}
-                  className={`py-3 px-3 text-sm font-medium whitespace-nowrap border-b-2 transition-colors ${
-                    activeTab === FIELDS.length
-                      ? "border-blue-600 text-blue-700"
-                      : "border-transparent text-gray-500 hover:text-gray-700"
-                  }`}
-                >
-                  Pricing
-                </button>
-              </nav>
+                  <button
+                    onClick={handleSubmit}
+                    disabled={submitting}
+                    style={{
+                      background: "#005ea2",
+                      color: "#ffffff",
+                      border: "none",
+                      borderRadius: "2px",
+                      padding: "8px 16px",
+                      fontSize: "13px",
+                      fontWeight: "700",
+                      cursor: submitting ? "not-allowed" : "pointer",
+                      opacity: submitting ? 0.7 : 1,
+                    }}
+                  >
+                    {submitting ? "Submitting…" : "Submit Proposal"}
+                  </button>
+                </div>
+              )}
             </div>
 
-            <CardContent>
+            {/* Proposal tabs */}
+            <div style={{ borderBottom: "1px solid #dfe1e2", padding: "0 20px", background: "#f0f0f0", display: "flex", overflowX: "auto" }}>
+              {FIELDS.map((f, i) => (
+                <button
+                  key={f.key}
+                  onClick={() => setActiveTab(i)}
+                  style={{
+                    padding: "12px 14px",
+                    fontSize: "13px",
+                    fontWeight: activeTab === i ? "700" : "400",
+                    color: activeTab === i ? "#1b2a6b" : "#565c65",
+                    background: "transparent",
+                    border: "none",
+                    borderBottom: activeTab === i ? "3px solid #1b2a6b" : "3px solid transparent",
+                    cursor: "pointer",
+                    whiteSpace: "nowrap",
+                  }}
+                >
+                  {f.label}
+                </button>
+              ))}
+              <button
+                onClick={() => setActiveTab(FIELDS.length)}
+                style={{
+                  padding: "12px 14px",
+                  fontSize: "13px",
+                  fontWeight: activeTab === FIELDS.length ? "700" : "400",
+                  color: activeTab === FIELDS.length ? "#1b2a6b" : "#565c65",
+                  background: "transparent",
+                  border: "none",
+                  borderBottom: activeTab === FIELDS.length ? "3px solid #1b2a6b" : "3px solid transparent",
+                  cursor: "pointer",
+                  whiteSpace: "nowrap",
+                }}
+              >
+                Pricing
+              </button>
+            </div>
+
+            {/* Proposal form content */}
+            <div style={{ padding: "20px" }}>
               {activeTab < FIELDS.length ? (
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label style={{ display: "block", fontSize: "14px", fontWeight: "700", color: "#1b1b1b", marginBottom: "8px" }}>
                     {FIELDS[activeTab].label}
                   </label>
                   <textarea
                     value={formData[FIELDS[activeTab].key as keyof typeof formData]}
-                    onChange={(e) =>
-                      setFormData({ ...formData, [FIELDS[activeTab].key]: e.target.value })
-                    }
+                    onChange={(e) => setFormData({ ...formData, [FIELDS[activeTab].key]: e.target.value })}
                     placeholder={FIELDS[activeTab].placeholder}
-                    rows={18}
+                    rows={16}
                     disabled={isSubmitted}
-                    className="w-full border border-gray-300 rounded-lg px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none disabled:bg-gray-50 disabled:text-gray-500"
+                    style={{
+                      width: "100%",
+                      border: "1px solid #adadad",
+                      borderRadius: "2px",
+                      padding: "10px 12px",
+                      fontSize: "14px",
+                      resize: "vertical",
+                      outline: "none",
+                      fontFamily: "inherit",
+                      boxSizing: "border-box",
+                      background: isSubmitted ? "#f0f0f0" : "#ffffff",
+                    }}
                   />
-                  <p className="text-xs text-gray-400 mt-1 text-right">
+                  <p style={{ fontSize: "12px", color: "#71767a", textAlign: "right", margin: "4px 0 0" }}>
                     {formData[FIELDS[activeTab].key as keyof typeof formData].length} characters
                   </p>
                 </div>
               ) : (
-                <div className="space-y-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                <div>
+                  <div style={{ marginBottom: "20px" }}>
+                    <label style={{ display: "block", fontSize: "14px", fontWeight: "700", color: "#1b1b1b", marginBottom: "8px" }}>
                       Proposed Contract Value ($)
                     </label>
                     <input
@@ -329,16 +605,25 @@ export default function ContractDetailPage() {
                       onChange={(e) => setFormData({ ...formData, proposedValue: e.target.value })}
                       placeholder="e.g. 42500000"
                       disabled={isSubmitted}
-                      className="w-full border border-gray-300 rounded-lg px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-50"
+                      style={{
+                        width: "100%",
+                        border: "1px solid #adadad",
+                        borderRadius: "2px",
+                        padding: "10px 12px",
+                        fontSize: "14px",
+                        outline: "none",
+                        boxSizing: "border-box",
+                        background: isSubmitted ? "#f0f0f0" : "#ffffff",
+                      }}
                     />
                     {formData.proposedValue && (
-                      <p className="text-sm text-gray-500 mt-1">
+                      <p style={{ fontSize: "13px", color: "#565c65", margin: "6px 0 0" }}>
                         = {Number(formData.proposedValue).toLocaleString("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 })}
                       </p>
                     )}
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label style={{ display: "block", fontSize: "14px", fontWeight: "700", color: "#1b1b1b", marginBottom: "8px" }}>
                       Pricing Narrative
                     </label>
                     <textarea
@@ -347,111 +632,101 @@ export default function ContractDetailPage() {
                       placeholder="Explain your pricing methodology, cost basis, labor categories, and basis of estimate..."
                       rows={12}
                       disabled={isSubmitted}
-                      className="w-full border border-gray-300 rounded-lg px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none disabled:bg-gray-50 disabled:text-gray-500"
+                      style={{
+                        width: "100%",
+                        border: "1px solid #adadad",
+                        borderRadius: "2px",
+                        padding: "10px 12px",
+                        fontSize: "14px",
+                        resize: "vertical",
+                        outline: "none",
+                        fontFamily: "inherit",
+                        boxSizing: "border-box",
+                        background: isSubmitted ? "#f0f0f0" : "#ffffff",
+                      }}
                     />
                   </div>
                 </div>
               )}
-            </CardContent>
+            </div>
 
-            {/* Navigation between tabs */}
+            {/* Tab navigation buttons */}
             {!isSubmitted && (
-              <div className="px-6 pb-4 flex justify-between">
-                <Button
-                  variant="ghost"
-                  size="sm"
+              <div style={{ padding: "0 20px 20px", display: "flex", justifyContent: "space-between" }}>
+                <button
                   onClick={() => setActiveTab(Math.max(0, activeTab - 1))}
                   disabled={activeTab === 0}
+                  style={{
+                    background: "transparent",
+                    color: activeTab === 0 ? "#c9c9c9" : "#005ea2",
+                    border: "none",
+                    cursor: activeTab === 0 ? "default" : "pointer",
+                    fontSize: "13px",
+                    fontWeight: "600",
+                    padding: "4px 0",
+                  }}
                 >
                   ← Previous
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="sm"
+                </button>
+                <button
                   onClick={() => setActiveTab(Math.min(FIELDS.length, activeTab + 1))}
                   disabled={activeTab === FIELDS.length}
+                  style={{
+                    background: "transparent",
+                    color: activeTab === FIELDS.length ? "#c9c9c9" : "#005ea2",
+                    border: "none",
+                    cursor: activeTab === FIELDS.length ? "default" : "pointer",
+                    fontSize: "13px",
+                    fontWeight: "600",
+                    padding: "4px 0",
+                  }}
                 >
                   Next →
-                </Button>
+                </button>
               </div>
             )}
-          </Card>
+          </div>
+
+          {/* AI Score card (post-submission) */}
+          {proposal?.status === "submitted" && proposal.aiScore !== null && (
+            <AIScoreCard proposal={proposal} />
+          )}
+          {proposal?.status === "submitted" && proposal.aiScore === null && (
+            <div style={{ background: "#ffffff", border: "1px solid #dfe1e2", padding: "24px", textAlign: "center", marginTop: "16px" }}>
+              <div className="animate-spin w-6 h-6 border-2 border-blue-600 border-t-transparent rounded-full" style={{ margin: "0 auto 12px" }} />
+              <p style={{ fontSize: "14px", color: "#565c65" }}>AI scoring in progress…</p>
+            </div>
+          )}
         </div>
       </div>
     </div>
   );
 }
 
-function AIScoreCard({ proposal }: { proposal: Proposal }) {
-  const breakdown = proposal.aiScoreBreakdown ? JSON.parse(proposal.aiScoreBreakdown) : null;
-  const feedback = proposal.aiFeedback ? JSON.parse(proposal.aiFeedback) : null;
-  const score = proposal.aiScore || 0;
-
-  const scoreColor = score >= 80 ? "text-green-600" : score >= 60 ? "text-yellow-600" : "text-red-600";
-  const scoreBg = score >= 80 ? "bg-green-50 border-green-200" : score >= 60 ? "bg-yellow-50 border-yellow-200" : "bg-red-50 border-red-200";
-
+function InfoRow({ label, value }: { label: string; value: string }) {
   return (
-    <Card className={`border ${scoreBg}`}>
-      <CardHeader>
-        <div className="flex items-center justify-between">
-          <h3 className="font-semibold text-gray-900">AI Assessment Score</h3>
-          <span className={`text-2xl font-bold ${scoreColor}`}>{score.toFixed(0)}/100</span>
-        </div>
-      </CardHeader>
-      <CardContent className="space-y-3">
-        {breakdown && (
-          <div className="space-y-2">
-            {Object.entries(breakdown).map(([key, val]) => (
-              <div key={key} className="flex items-center gap-2">
-                <span className="text-xs text-gray-500 w-28 capitalize">{key.replace("_", " ")}</span>
-                <div className="flex-1 bg-gray-200 rounded-full h-1.5">
-                  <div
-                    className="bg-blue-600 h-1.5 rounded-full"
-                    style={{ width: `${val as number}%` }}
-                  />
-                </div>
-                <span className="text-xs font-medium text-gray-700 w-8 text-right">{val as number}</span>
-              </div>
-            ))}
-          </div>
-        )}
-        {feedback && (
-          <>
-            {feedback.recommendation && (
-              <Badge variant={
-                feedback.recommendation === "Award" ? "success" :
-                feedback.recommendation === "High Competitive" ? "info" :
-                feedback.recommendation === "Competitive" ? "warning" : "danger"
-              }>
-                {feedback.recommendation}
-              </Badge>
-            )}
-            {feedback.feedback && (
-              <p className="text-sm text-gray-600">{feedback.feedback}</p>
-            )}
-            {feedback.strengths?.length > 0 && (
-              <div>
-                <p className="text-xs font-medium text-gray-700 mb-1">Strengths</p>
-                <ul className="text-xs text-gray-600 space-y-0.5">
-                  {feedback.strengths.map((s: string, i: number) => (
-                    <li key={i} className="flex gap-1.5"><span className="text-green-500">+</span>{s}</li>
-                  ))}
-                </ul>
-              </div>
-            )}
-            {feedback.weaknesses?.length > 0 && (
-              <div>
-                <p className="text-xs font-medium text-gray-700 mb-1">Areas to Improve</p>
-                <ul className="text-xs text-gray-600 space-y-0.5">
-                  {feedback.weaknesses.map((w: string, i: number) => (
-                    <li key={i} className="flex gap-1.5"><span className="text-red-500">−</span>{w}</li>
-                  ))}
-                </ul>
-              </div>
-            )}
-          </>
-        )}
-      </CardContent>
-    </Card>
+    <tr>
+      <td style={{
+        padding: "8px 12px 8px 0",
+        fontSize: "13px",
+        fontWeight: "700",
+        color: "#565c65",
+        verticalAlign: "top",
+        whiteSpace: "nowrap",
+        width: "200px",
+        borderBottom: "1px solid #f0f0f0",
+      }}>
+        {label}:
+      </td>
+      <td style={{
+        padding: "8px 0",
+        fontSize: "14px",
+        color: "#1b1b1b",
+        verticalAlign: "top",
+        borderBottom: "1px solid #f0f0f0",
+      }}>
+        {value}
+      </td>
+    </tr>
   );
 }
