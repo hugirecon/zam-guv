@@ -78,6 +78,7 @@ export default function VPDashboard() {
   const router = useRouter();
   const [contracts, setContracts] = useState<Contract[]>([]);
   const [loading, setLoading] = useState(true);
+  const [vehicleType, setVehicleType] = useState("Standard");
   const [search, setSearch] = useState("");
   const [filterSetAside, setFilterSetAside] = useState("");
   const [filterType, setFilterType] = useState("");
@@ -89,18 +90,30 @@ export default function VPDashboard() {
   const [pendingSearch, setPendingSearch] = useState("");
 
   useEffect(() => {
+    fetch("/api/auth/me")
+      .then((r) => r.json())
+      .then((data) => {
+        if (data?.session?.vehicleType) {
+          setVehicleType(data.session.vehicleType);
+        }
+      })
+      .catch(console.error);
+  }, []);
+
+  useEffect(() => {
     const params = new URLSearchParams();
     if (search) params.set("search", search);
     if (filterSetAside) params.set("setAside", filterSetAside);
     if (filterType) params.set("type", filterType);
     if (filterClear) params.set("securityClear", filterClear);
+    if (vehicleType && vehicleType !== "Standard") params.set("vehicleType", vehicleType);
 
     fetch(`/api/contracts?${params}`)
       .then((r) => r.json())
       .then(setContracts)
       .catch(console.error)
       .finally(() => setLoading(false));
-  }, [search, filterSetAside, filterType, filterClear]);
+  }, [search, filterSetAside, filterType, filterClear, vehicleType]);
 
   useEffect(() => {
     fetch("/api/proposals")

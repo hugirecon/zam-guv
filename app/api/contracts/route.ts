@@ -12,6 +12,7 @@ export async function GET(req: NextRequest) {
   const setAside = searchParams.get("setAside") || "";
   const type = searchParams.get("type") || "";
   const securityClear = searchParams.get("securityClear") || "";
+  const vehicleType = searchParams.get("vehicleType") || "";
 
   const contracts = await prisma.contract.findMany({
     where: {
@@ -28,6 +29,7 @@ export async function GET(req: NextRequest) {
       ...(setAside && { setAside }),
       ...(type && { type }),
       ...(securityClear && { securityClear }),
+      ...(vehicleType && vehicleType !== 'Standard' && { vehicleType }),
     },
     include: {
       _count: { select: { proposals: true } },

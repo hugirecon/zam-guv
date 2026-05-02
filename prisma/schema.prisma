@@ -44,6 +44,7 @@ model Contract {
   pob              String   // Place of performance
   securityClear    String   // "None" | "Secret" | "Top Secret" | "TS/SCI"
   type             String   // "FFP" | "T&M" | "CPFF" | "IDIQ" | "BPA"
+  vehicleType      String   @default("Standard")  // "Standard" | "IDIQ" | "OTA" | "GSA" | "SBIR"
   status           String   @default("active") // "active" | "closed" | "awarded"
 
   proposals Proposal[]
@@ -57,7 +58,8 @@ model Session {
   expiresAt DateTime // startedAt + 30 minutes (or 24h for training)
   locked    Boolean  @default(false)
   lockedAt  DateTime?
-  mode      String   @default("assessment") // "assessment" | "training"
+  mode        String   @default("assessment") // "assessment" | "training"
+  vehicleType String   @default("Standard")  // "Standard" | "IDIQ" | "OTA" | "GSA" | "SBIR"
 
   user      User       @relation(fields: [userId], references: [id])
   proposals Proposal[]

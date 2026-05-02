@@ -18,6 +18,7 @@ export async function GET() {
         expiresAt: session.expiresAt,
         locked: session.locked,
         mode: session.mode,
+        vehicleType: session.vehicleType,
       };
     }
   }

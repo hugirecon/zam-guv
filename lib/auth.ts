@@ -36,15 +36,16 @@ export async function getAuthUser() {
   return user ? { ...user, sessionId: payload.sessionId } : null;
 }
 
-export async function getOrCreateVPSession(userId: string, trainingMode = false) {
+export async function getOrCreateVPSession(userId: string, trainingMode = false, vehicleType = 'Standard') {
   const now = new Date();
   const mode = trainingMode ? "training" : "assessment";
 
-  // Find an active (non-expired, non-locked) session of the same mode
+  // Find an active (non-expired, non-locked) session of the same mode and vehicleType
   const existing = await prisma.session.findFirst({
     where: {
       userId,
       mode,
+      vehicleType,
       locked: false,
       expiresAt: { gt: now },
     },
@@ -60,6 +61,7 @@ export async function getOrCreateVPSession(userId: string, trainingMode = false)
     data: {
       userId,
       mode,
+      vehicleType,
       expiresAt: new Date(now.getTime() + expiryMs),
     },
   });

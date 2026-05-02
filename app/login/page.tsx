@@ -3,6 +3,13 @@ import { useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 
+const VEHICLE_CONFIG: Record<string, { module: string; label: string; color: string; badgeClass: string; iconBg: string }> = {
+  idiq: { module: "Module 04", label: "IDIQ Contracts & Task Orders", color: "indigo", badgeClass: "text-indigo-400 bg-indigo-950 border-indigo-700", iconBg: "bg-indigo-600 shadow-indigo-500/25" },
+  ota:  { module: "Module 05", label: "Other Transaction Authority", color: "cyan",   badgeClass: "text-cyan-400 bg-cyan-950 border-cyan-700",     iconBg: "bg-cyan-600 shadow-cyan-500/25"   },
+  gsa:  { module: "Module 06", label: "GSA Schedule (MAS)",          color: "violet", badgeClass: "text-violet-400 bg-violet-950 border-violet-700", iconBg: "bg-violet-600 shadow-violet-500/25" },
+  sbir: { module: "Module 07", label: "SBIR/STTR",                   color: "orange", badgeClass: "text-orange-400 bg-orange-950 border-orange-700", iconBg: "bg-orange-600 shadow-orange-500/25" },
+};
+
 function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -12,6 +19,12 @@ function LoginForm() {
   const [error, setError] = useState("");
 
   const isReady = searchParams.get("ready") === "true";
+  const vehicleParam = searchParams.get("vehicle") || "";
+  const vehicleConfig = VEHICLE_CONFIG[vehicleParam.toLowerCase()] ?? null;
+
+  // Map vehicle param to vehicleType value for API
+  const vehicleTypeMap: Record<string, string> = { idiq: "IDIQ", ota: "OTA", gsa: "GSA", sbir: "SBIR" };
+  const vehicleType = vehicleTypeMap[vehicleParam.toLowerCase()] ?? "Standard";
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -22,7 +35,7 @@ function LoginForm() {
       const res = await fetch("/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ email, password, vehicleType }),
       });
 
       const data = await res.json();
@@ -68,7 +81,13 @@ function LoginForm() {
         </div>
 
         {/* Module badge */}
-        {isAssessmentMode ? (
+        {vehicleConfig ? (
+          <div className="text-center mb-6">
+            <span className={`inline-block text-xs font-bold px-3 py-1.5 rounded-full uppercase tracking-widest border ${vehicleConfig.badgeClass}`}>
+              {vehicleConfig.module} — {vehicleConfig.label}
+            </span>
+          </div>
+        ) : isAssessmentMode ? (
           <div className="text-center mb-6">
             <span className="inline-block text-xs font-bold text-red-400 bg-red-950 border border-red-700 px-3 py-1.5 rounded-full uppercase tracking-widest">
               Module 03 — Zam.guv GovCon Simulation
@@ -84,7 +103,7 @@ function LoginForm() {
 
         {/* Logo */}
         <div className="text-center mb-8">
-          <div className={`inline-flex items-center justify-center w-16 h-16 rounded-2xl mb-4 shadow-lg ${isAssessmentMode ? "bg-red-600 shadow-red-500/25" : "bg-blue-600 shadow-blue-500/25"}`}>
+          <div className={`inline-flex items-center justify-center w-16 h-16 rounded-2xl mb-4 shadow-lg ${vehicleConfig ? vehicleConfig.iconBg : isAssessmentMode ? "bg-red-600 shadow-red-500/25" : "bg-blue-600 shadow-blue-500/25"}`}>
             <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
             </svg>
