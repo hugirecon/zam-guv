@@ -71,7 +71,7 @@ export default function VPSim() {
   const router = useRouter();
   const [contracts, setContracts] = useState<Contract[]>([]);
   const [loading, setLoading] = useState(true);
-  const [vehicleType, setVehicleType] = useState("Standard");
+  const [vehicleType, setVehicleType] = useState<string | null>(null); // null = loading
   const [search, setSearch] = useState("");
   const [filterSetAside, setFilterSetAside] = useState("");
   const [filterType, setFilterType] = useState("");
@@ -86,11 +86,9 @@ export default function VPSim() {
     fetch("/api/auth/me")
       .then((r) => r.json())
       .then((data) => {
-        if (data?.session?.vehicleType) {
-          setVehicleType(data.session.vehicleType);
-        }
+        setVehicleType(data?.session?.vehicleType ?? "Standard");
       })
-      .catch(console.error);
+      .catch(() => setVehicleType("Standard"));
   }, []);
 
   useEffect(() => {
@@ -99,7 +97,9 @@ export default function VPSim() {
     if (filterSetAside) params.set("setAside", filterSetAside);
     if (filterType) params.set("type", filterType);
     if (filterClear) params.set("securityClear", filterClear);
-    if (vehicleType && vehicleType !== "Standard") params.set("vehicleType", vehicleType);
+    // Always filter by vehicleType — wait until it's loaded (not null)
+    if (vehicleType === null) return;
+    params.set("vehicleType", vehicleType);
 
     fetch(`/api/contracts?${params}`)
       .then((r) => r.json())
