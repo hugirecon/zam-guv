@@ -319,8 +319,8 @@ export default function ContractDetailPage() {
 
     fetch("/api/auth/me")
       .then((r) => r.json())
-      .then((session) => {
-        if (session?.mode === "training") {
+      .then((data) => {
+        if (data?.session?.mode === "training") {
           setIsTrainingMode(true);
         }
       })
