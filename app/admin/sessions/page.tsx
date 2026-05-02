@@ -10,8 +10,24 @@ interface Session {
   locked: boolean;
   lockedAt: string | null;
   mode?: string;
+  vehicleType?: string | null;
   user: { name: string; email: string; currentModule: number };
   _count: { proposals: number };
+}
+
+function VehicleBadge({ vehicleType }: { vehicleType?: string | null }) {
+  if (!vehicleType) return null;
+  const colors: Record<string, string> = {
+    IDIQ: "bg-indigo-50 text-indigo-700 border-indigo-200",
+    OTA: "bg-cyan-50 text-cyan-700 border-cyan-200",
+    GSA: "bg-violet-50 text-violet-700 border-violet-200",
+    SBIR: "bg-orange-50 text-orange-700 border-orange-200",
+    Standard: "bg-gray-100 text-gray-600 border-gray-200",
+  };
+  const color = colors[vehicleType] ?? colors["Standard"];
+  return (
+    <span className={`text-xs font-semibold border px-2 py-0.5 rounded-full ${color}`}>{vehicleType}</span>
+  );
 }
 
 function ModuleBadge({ module }: { module: number }) {
@@ -82,6 +98,7 @@ export default function AdminSessions() {
                         <div className="flex items-center gap-2 mb-0.5">
                           <p className="text-sm font-medium text-gray-900">{s.user.name}</p>
                           <ModuleBadge module={s.user.currentModule ?? 1} />
+                          <VehicleBadge vehicleType={s.vehicleType} />
                         </div>
                         <p className="text-xs text-gray-500">{s.user.email}</p>
                       </td>

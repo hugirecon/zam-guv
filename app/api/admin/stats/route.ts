@@ -41,6 +41,12 @@ export async function GET() {
     take: 8,
   });
 
+  const byVehicleType = await prisma.contract.groupBy({
+    by: ["vehicleType"],
+    _count: true,
+    orderBy: { _count: { vehicleType: "desc" } },
+  });
+
   return NextResponse.json({
     totalContracts,
     totalProposals,
@@ -50,5 +56,6 @@ export async function GET() {
     activeSessions,
     topScored,
     byAgency,
+    byVehicleType,
   });
 }

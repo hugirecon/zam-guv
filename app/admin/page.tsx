@@ -20,6 +20,10 @@ interface Stats {
     agency: string;
     _count: number;
   }[];
+  byVehicleType: {
+    vehicleType: string;
+    _count: number;
+  }[];
 }
 
 function StatCard({ label, value, sub, color = "blue" }: { label: string; value: number | string; sub?: string; color?: string }) {
@@ -83,7 +87,7 @@ export default function AdminDashboard() {
         <StatCard label="Active Sessions" value={stats.activeSessions} sub="30-min timer running" color="yellow" />
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Top scored proposals */}
         <Card>
           <CardHeader>
@@ -129,6 +133,46 @@ export default function AdminDashboard() {
                   </div>
                   <div className="bg-gray-100 rounded-full h-1.5">
                     <div className="bg-blue-500 h-1.5 rounded-full" style={{ width: `${pct}%` }} />
+                  </div>
+                </div>
+              );
+            })}
+          </CardContent>
+        </Card>
+
+        {/* Contracts by vehicle type */}
+        <Card>
+          <CardHeader>
+            <h2 className="font-semibold text-gray-900">🚗 By Vehicle Type</h2>
+            <p className="text-sm text-gray-500">Contract vehicle breakdown</p>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            {stats.byVehicleType.map((v) => {
+              const pct = Math.round((v._count / stats.totalContracts) * 100);
+              const barColors: Record<string, string> = {
+                IDIQ: "bg-indigo-500",
+                OTA: "bg-cyan-500",
+                GSA: "bg-violet-500",
+                SBIR: "bg-orange-500",
+                Standard: "bg-gray-400",
+              };
+              const labelColors: Record<string, string> = {
+                IDIQ: "text-indigo-700",
+                OTA: "text-cyan-700",
+                GSA: "text-violet-700",
+                SBIR: "text-orange-700",
+                Standard: "text-gray-600",
+              };
+              const bar = barColors[v.vehicleType] ?? "bg-gray-400";
+              const label = labelColors[v.vehicleType] ?? "text-gray-700";
+              return (
+                <div key={v.vehicleType}>
+                  <div className="flex justify-between text-sm mb-1">
+                    <span className={`font-medium ${label}`}>{v.vehicleType}</span>
+                    <span className="text-gray-500 font-medium">{v._count}</span>
+                  </div>
+                  <div className="bg-gray-100 rounded-full h-1.5">
+                    <div className={`${bar} h-1.5 rounded-full`} style={{ width: `${pct}%` }} />
                   </div>
                 </div>
               );

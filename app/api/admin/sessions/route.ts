@@ -10,7 +10,14 @@ export async function GET() {
 
   const sessions = await prisma.session.findMany({
     orderBy: { startedAt: "desc" },
-    include: {
+    select: {
+      id: true,
+      startedAt: true,
+      expiresAt: true,
+      locked: true,
+      lockedAt: true,
+      mode: true,
+      vehicleType: true,
       user: { select: { name: true, email: true, currentModule: true } },
       _count: { select: { proposals: true } },
     },

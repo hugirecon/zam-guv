@@ -10,11 +10,26 @@ interface Contract {
   agency: string;
   setAside: string | null;
   type: string;
+  vehicleType: string;
   valueMin: number;
   valueMax: number;
   dueDate: string;
   securityClear: string;
   _count: { proposals: number };
+}
+
+function VehicleBadge({ vehicleType }: { vehicleType: string }) {
+  const colors: Record<string, string> = {
+    IDIQ: "bg-indigo-50 text-indigo-700 border border-indigo-200",
+    OTA: "bg-cyan-50 text-cyan-700 border border-cyan-200",
+    GSA: "bg-violet-50 text-violet-700 border border-violet-200",
+    SBIR: "bg-orange-50 text-orange-700 border border-orange-200",
+    Standard: "bg-gray-100 text-gray-600 border border-gray-200",
+  };
+  const color = colors[vehicleType] ?? colors["Standard"];
+  return (
+    <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${color}`}>{vehicleType}</span>
+  );
 }
 
 function fmt(min: number, max: number) {
@@ -27,15 +42,17 @@ export default function AdminContracts() {
   const [contracts, setContracts] = useState<Contract[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
+  const [vehicleFilter, setVehicleFilter] = useState("");
 
   useEffect(() => {
     const p = new URLSearchParams();
     if (search) p.set("search", search);
+    if (vehicleFilter) p.set("vehicleType", vehicleFilter);
     fetch(`/api/contracts?${p}`)
       .then(r => r.json())
       .then(setContracts)
       .finally(() => setLoading(false));
-  }, [search]);
+  }, [search, vehicleFilter]);
 
   return (
     <div className="space-y-6">
@@ -47,14 +64,26 @@ export default function AdminContracts() {
       </div>
 
       <Card>
-        <div className="p-4 border-b border-gray-200">
+        <div className="p-4 border-b border-gray-200 flex gap-3">
           <input
             type="text"
             placeholder="Search contracts…"
             value={search}
             onChange={e => setSearch(e.target.value)}
-            className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="flex-1 border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
+          <select
+            value={vehicleFilter}
+            onChange={e => setVehicleFilter(e.target.value)}
+            className="border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+          >
+            <option value="">All Vehicles</option>
+            <option value="Standard">Standard</option>
+            <option value="IDIQ">IDIQ</option>
+            <option value="OTA">OTA</option>
+            <option value="GSA">GSA</option>
+            <option value="SBIR">SBIR</option>
+          </select>
         </div>
 
         {loading ? (
@@ -67,6 +96,7 @@ export default function AdminContracts() {
                   <th className="text-left px-6 py-3 font-medium">Solicitation</th>
                   <th className="text-left px-6 py-3 font-medium">Agency</th>
                   <th className="text-left px-6 py-3 font-medium">Set-Aside</th>
+                  <th className="text-left px-6 py-3 font-medium">Vehicle</th>
                   <th className="text-left px-6 py-3 font-medium">Type</th>
                   <th className="text-left px-6 py-3 font-medium">Value</th>
                   <th className="text-left px-6 py-3 font-medium">Due</th>
@@ -82,6 +112,7 @@ export default function AdminContracts() {
                     </td>
                     <td className="px-6 py-4 text-sm text-gray-600">{c.agency}</td>
                     <td className="px-6 py-4"><Badge variant="info">{c.setAside || "Unrestricted"}</Badge></td>
+                    <td className="px-6 py-4"><VehicleBadge vehicleType={c.vehicleType ?? "Standard"} /></td>
                     <td className="px-6 py-4"><Badge>{c.type}</Badge></td>
                     <td className="px-6 py-4 text-sm font-medium text-gray-700">{fmt(c.valueMin, c.valueMax)}</td>
                     <td className="px-6 py-4 text-sm text-gray-600">{new Date(c.dueDate).toLocaleDateString()}</td>

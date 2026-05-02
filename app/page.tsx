@@ -27,7 +27,7 @@ export default function Home() {
               GovCon Assessment System
             </h1>
             <p className="text-slate-400 text-lg max-w-xl mx-auto">
-              Three-module program: learn the landscape, train on the process, then take the live simulation.
+              Seven-module assessment system: core GovCon track plus four vehicle-specific deep-dive simulations.
             </p>
           </div>
 

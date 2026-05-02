@@ -29,7 +29,7 @@ export async function GET(req: NextRequest) {
       ...(setAside && { setAside }),
       ...(type && { type }),
       ...(securityClear && { securityClear }),
-      ...(vehicleType && vehicleType !== 'Standard' && { vehicleType }),
+      ...(vehicleType && { vehicleType }),
     },
     include: {
       _count: { select: { proposals: true } },
