@@ -50,7 +50,12 @@ function LoginForm() {
         return;
       }
 
-      // Route VP based on currentModule
+      // Vehicle-specific logins always go straight to portal
+      if (vehicleType !== "Standard") {
+        router.replace("/vp");
+        return;
+      }
+      // Core track: route based on currentModule
       const mod = data.currentModule ?? 1;
       if (mod === 1) {
         router.replace("/modules/intro");
