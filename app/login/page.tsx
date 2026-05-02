@@ -50,18 +50,8 @@ function LoginForm() {
         return;
       }
 
-      // Vehicle-specific logins always go straight to portal
-      if (vehicleType !== "Standard") {
-        router.replace("/vp");
-        return;
-      }
-      // Core track: route based on currentModule
-      const mod = data.currentModule ?? 1;
-      if (mod === 1) {
-        router.replace("/modules/intro");
-      } else {
-        router.replace("/vp");
-      }
+      // All VP logins go to the hub
+      router.replace("/vp/hub");
     } catch {
       setError("Network error. Please try again.");
     } finally {

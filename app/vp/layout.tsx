@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useState, useCallback } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { SessionTimer } from "@/components/vp/SessionTimer";
 
 function TrainingBanner() {
@@ -122,6 +122,8 @@ function ZamGovLogo() {
 
 export default function VPLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
+  const pathname = usePathname();
+  const isSimPage = pathname?.includes("/vp/sim");
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<SessionInfo | null>(null);
   const [loading, setLoading] = useState(true);
@@ -153,6 +155,11 @@ export default function VPLayout({ children }: { children: React.ReactNode }) {
     await fetch("/api/auth/logout", { method: "POST" });
     router.replace("/login");
   };
+
+  // On non-sim pages (e.g. /vp/hub), skip the full SAM.gov layout — the page handles its own UI
+  if (!isSimPage) {
+    return <>{children}</>;
+  }
 
   if (loading) {
     return (
