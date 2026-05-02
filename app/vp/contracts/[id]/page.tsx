@@ -288,6 +288,7 @@ export default function ContractDetailPage() {
   const [activeTab, setActiveTab] = useState(0);
   const [isTrainingMode, setIsTrainingMode] = useState(false);
   const [exampleLoaded, setExampleLoaded] = useState(false);
+  const [scoredToast, setScoredToast] = useState(false);
 
   // Section refs for sidebar nav
   const generalRef = useRef<HTMLDivElement>(null);
@@ -295,6 +296,7 @@ export default function ContractDetailPage() {
   const descriptionRef = useRef<HTMLDivElement>(null);
   const contactRef = useRef<HTMLDivElement>(null);
   const proposalRef = useRef<HTMLDivElement>(null);
+  const scoreCardRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     fetch(`/api/contracts/${id}`)
@@ -398,6 +400,13 @@ export default function ContractDetailPage() {
       if (!res.ok) throw new Error("Submit failed");
       const submitted = await res.json();
       setProposal(submitted);
+      if (isTrainingMode && submitted.aiScore !== null) {
+        setScoredToast(true);
+        setTimeout(() => setScoredToast(false), 6000);
+        setTimeout(() => {
+          scoreCardRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+        }, 100);
+      }
     } catch {
       alert("Submission failed. Please try again.");
     } finally {
@@ -614,7 +623,34 @@ export default function ContractDetailPage() {
         </div>
 
         {/* ===== KDT Simulation — Submit Proposal ===== */}
-        <div ref={proposalRef} style={{ marginTop: "32px" }}>
+        <div ref={proposalRef} style={{ marginTop: "32px", position: "relative" }}>
+
+          {/* Sticky score badge — training mode only */}
+          {isTrainingMode && proposal?.aiScore !== null && proposal?.aiScore !== undefined && (
+            <div style={{
+              position: "sticky",
+              top: "80px",
+              zIndex: 10,
+              display: "flex",
+              justifyContent: "flex-end",
+              pointerEvents: "none",
+              marginBottom: "-28px",
+            }}>
+              <span style={{
+                background: "#e6a817",
+                color: "#ffffff",
+                borderRadius: "2px",
+                padding: "4px 14px",
+                fontSize: "12px",
+                fontWeight: "800",
+                border: "1px solid #c88b00",
+                pointerEvents: "auto",
+                boxShadow: "0 1px 4px rgba(0,0,0,0.15)",
+              }}>
+                Score: {proposal.aiScore.toFixed(0)} / 100
+              </span>
+            </div>
+          )}
 
           {/* Training mode banner */}
           {isTrainingMode && (
@@ -764,6 +800,24 @@ export default function ContractDetailPage() {
                 </div>
               )}
             </div>
+
+            {/* Training scored toast */}
+            {isTrainingMode && scoredToast && (
+              <div style={{
+                background: "#faf3d1",
+                border: "1px solid #e6c84a",
+                borderLeft: "4px solid #e6a817",
+                padding: "10px 16px",
+                display: "flex",
+                alignItems: "center",
+                gap: "8px",
+                fontSize: "13px",
+                fontWeight: "700",
+                color: "#7a4800",
+              }}>
+                ✅ Proposal scored! Scroll down to see your AI feedback and score.
+              </div>
+            )}
 
             {/* Proposal tabs */}
             <div style={{ borderBottom: "1px solid #dfe1e2", padding: "0 20px", background: "#f0f0f0", display: "flex", overflowX: "auto" }}>
@@ -930,7 +984,43 @@ export default function ContractDetailPage() {
 
           {/* AI Score card (post-submission) */}
           {proposal?.status === "submitted" && proposal.aiScore !== null && (
-            <AIScoreCard proposal={proposal} />
+            <div ref={scoreCardRef} style={{ marginTop: "16px" }}>
+              {isTrainingMode && (
+                <p style={{
+                  fontSize: "13px",
+                  fontWeight: "800",
+                  color: "#7a4800",
+                  textTransform: "uppercase",
+                  letterSpacing: "0.5px",
+                  margin: "0 0 6px",
+                }}>
+                  Your Training Feedback
+                </p>
+              )}
+              <AIScoreCard proposal={proposal} />
+              {isTrainingMode && (
+                <div style={{ marginTop: "12px", padding: "16px", background: "#faf3d1", border: "1px solid #e6c84a", borderRadius: "2px" }}>
+                  <p style={{ fontSize: "12px", color: "#7a4800", margin: "0 0 10px" }}>
+                    Training mode — you can revise and resubmit as many times as you like.
+                  </p>
+                  <button
+                    onClick={() => proposalRef.current?.scrollIntoView({ behavior: "smooth", block: "start" })}
+                    style={{
+                      background: "#e6a817",
+                      color: "#ffffff",
+                      border: "none",
+                      borderRadius: "2px",
+                      padding: "10px 20px",
+                      fontSize: "14px",
+                      fontWeight: "700",
+                      cursor: "pointer",
+                    }}
+                  >
+                    ✏️ Revise &amp; Resubmit
+                  </button>
+                </div>
+              )}
+            </div>
           )}
           {proposal?.status === "submitted" && proposal.aiScore === null && (
             <div style={{ background: "#ffffff", border: "1px solid #dfe1e2", padding: "24px", textAlign: "center", marginTop: "16px" }}>
