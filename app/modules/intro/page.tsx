@@ -334,9 +334,7 @@ export default function IntroPage() {
                   ["FFP", "Firm Fixed Price. Set price, government pays regardless of your actual costs. Most common type in services. Profit/loss is 100% on you."],
                   ["T&M", "Time & Materials. Billed by actual labor hours + materials at negotiated rates. Used when scope is uncertain — e.g., ongoing investigation support where the number of hours isn't predictable."],
                   ["CPFF", "Cost Plus Fixed Fee. Government reimburses all allowable costs plus a pre-negotiated fee. Used for R&D, complex system development. Requires DCAA-compliant accounting system."],
-                  ["IDIQ", "Indefinite Delivery, Indefinite Quantity. Umbrella vehicle for task orders over time (typically 5 years). Getting on an IDIQ = pre-approved vendor. Work flows via individual Task Orders competed among holders."],
-                  ["BPA", "Blanket Purchase Agreement. Pre-negotiated agreement for recurring purchases, typically under a GSA Schedule. Faster ordering, less paperwork per transaction."],
-                  ["Task Order", "Specific order placed against an IDIQ or BPA. Has its own scope, price, and period of performance. IDIQ holders compete for Task Orders."],
+                  ["Task Order", "Specific order placed against an IDIQ or BPA. Has its own scope, price, and period of performance. IDIQ holders compete for Task Orders among other vehicle holders."],
                 ].map(([term, def]) => (
                   <div key={term} className="px-6 py-4 flex gap-4">
                     <span className="font-bold text-gray-900 text-sm w-40 flex-shrink-0">{term}</span>
@@ -545,37 +543,7 @@ export default function IntroPage() {
                 ))}
               </div>
 
-              {/* Set-Aside Programs */}
-              <div className="bg-amber-800 px-6 py-2.5 border-t border-amber-700">
-                <h4 className="text-white font-semibold text-xs uppercase tracking-widest">Set-Aside Programs — Eligibility Gates, Not Vehicles</h4>
-                <p className="text-amber-200 text-xs mt-0.5">Certifications that restrict competition to specific vendor categories. You must HOLD the cert before pursuing any set-aside award.</p>
-              </div>
-              <div className="divide-y divide-gray-100">
-                {[
-                  ["SB (Small Business)", "Small Business status under the applicable NAICS size standard. Most common set-aside gate. KDT qualifies as a small business until revenue thresholds are exceeded."],
-                  ["SDVOSB (VetCert)", "Service-Disabled Veteran-Owned Small Business. Must be VetCert-verified through SBA. Unlocks SDVOSB set-asides at VA, DoD, and civilian agencies."],
-                  ["8(a) Program", "SBA 8(a) Business Development Program. 9-year program for socially and economically disadvantaged businesses. Sole-source authority up to $4.5M (DoD) and $4M (civilian). Most powerful small business accelerant in GovCon."],
-                  ["HUBZone", "Historically Underutilized Business Zone. Requires 35% of employees to reside in a qualified HUBZone. Offers price evaluation preferences and access to HUBZone-exclusive competitions."],
-                  ["WOSB (Women-Owned)", "Women-Owned Small Business — 51%+ owned and controlled by women. Unlocks WOSB set-asides across hundreds of NAICS codes. EDWOSB designation adds economically disadvantaged preference."],
-                ].map(([term, def]) => (
-                  <div key={term} className="px-6 py-4 flex gap-4">
-                    <span className="font-bold text-gray-900 text-sm w-44 flex-shrink-0">{term}</span>
-                    <span className="text-gray-600 text-sm">{def}</span>
-                  </div>
-                ))}
-              </div>
 
-              {/* BPA — last per vehicle flow order */}
-              <div className="divide-y divide-gray-100 border-t border-gray-100">
-                {[
-                  ["BPA", "Blanket Purchase Agreement. Pre-negotiated agreement for recurring purchases, typically established against a GSA Schedule. Faster ordering and less paperwork per transaction. Agency-specific — established between an agency and one or more Schedule holders."],
-                ].map(([term, def]) => (
-                  <div key={term} className="px-6 py-4 flex gap-4">
-                    <span className="font-bold text-gray-900 text-sm w-40 flex-shrink-0">{term}</span>
-                    <span className="text-gray-600 text-sm">{def}</span>
-                  </div>
-                ))}
-              </div>
             </div>
 
             {/* Solicitation Types */}
@@ -683,7 +651,7 @@ export default function IntroPage() {
               </div>
               <div className="divide-y divide-gray-100">
                 {[
-                  ["Sources Sought / RFI", "Government market research notice. Respond to show capability and get on the CO's radar before the formal RFP. No award results — purely intelligence gathering for both sides."],
+
                   ["Q&A Period", "Window after RFP release where offerors can submit questions. Government responds via Amendment. Example: 'Can subcontractors hold the required clearances?' — if you don't ask, you don't know."],
                   ["Amendment", "Official modification to the RFP. Changes scope, pricing requirements, response date, or clarifies questions. Always read every amendment — they can completely change whether you bid."],
                   ["Oral Presentation", "Some acquisitions require an in-person or virtual presentation to the evaluation board before or after written proposal. High-stakes — usually reserved for high-value contracts."],
