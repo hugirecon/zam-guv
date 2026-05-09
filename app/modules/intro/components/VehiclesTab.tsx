@@ -128,7 +128,7 @@ export default function VehiclesTab() {
           ["Security services SIN", "PSS / SIN 541690, SIN 561210 (Facilities)"],
           ["Ordering tool", "eBuy (GSA's RFQ platform)"],
           ["Application timeline", "6–12 months for initial schedule award"],
-          ["SINs also relevant", "54151S (IT), 54151HACS (cybersecurity), 541330 (engineering)"],
+          ["SINs also relevant", "54151S (IT services), 54151HEAL (health IT), 54151HACS (highly adaptive cybersecurity), 541330 (engineering)"],
         ]}
         kdtNote="Most accessible vehicle. Getting on GSA Schedule lets agencies buy from KDT without full RFP process. Long-term investment — apply in Year 1, start seeing orders in Year 2. Also unlocks BPAs for recurring work."
       />
