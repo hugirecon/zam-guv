@@ -2,6 +2,10 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import VehiclesTab from "./components/VehiclesTab";
+import ComplianceTab from "./components/ComplianceTab";
+
+type Tab = "natural" | "vehicles" | "compliance";
 
 interface Progress {
   currentModule: number;
@@ -14,6 +18,7 @@ export default function IntroPage() {
   const router = useRouter();
   const [progress, setProgress] = useState<Progress | null>(null);
   const [advancing, setAdvancing] = useState(false);
+  const [activeTab, setActiveTab] = useState<Tab>("natural");
 
   useEffect(() => {
     fetch("/api/user/progress", { credentials: "include" })
@@ -100,6 +105,43 @@ export default function IntroPage() {
           </div>
         </div>
 
+        {/* TAB BAR */}
+        <div className="mb-10">
+          <div className="inline-flex bg-gray-100 rounded-xl p-1 gap-1">
+            {([
+              { id: "natural" as Tab, label: "Natural", icon: "📅" },
+              { id: "vehicles" as Tab, label: "Contract Vehicles", icon: "🚗" },
+              { id: "compliance" as Tab, label: "Compliance", icon: "🔒" },
+            ]).map(({ id, label, icon }) => (
+              <button
+                key={id}
+                onClick={() => setActiveTab(id)}
+                className={`px-4 py-2.5 rounded-lg text-sm font-semibold transition-all ${
+                  activeTab === id
+                    ? "bg-white text-gray-900 shadow-sm"
+                    : "text-gray-500 hover:text-gray-700"
+                }`}
+              >
+                {icon} {label}
+              </button>
+            ))}
+          </div>
+          <p className="text-xs text-gray-400 mt-2 ml-1">
+            {activeTab === "natural" && "Terminology organized by contracting year — what you encounter at each stage of a healthy pipeline."}
+            {activeTab === "vehicles" && "Reference by contract vehicle type — know the structure before you pursue."}
+            {activeTab === "compliance" && "Regulatory and compliance framework — grouped by domain."}
+          </p>
+        </div>
+
+        {/* VEHICLES TAB */}
+        {activeTab === "vehicles" && <VehiclesTab />}
+
+        {/* COMPLIANCE TAB */}
+        {activeTab === "compliance" && <ComplianceTab />}
+
+        {/* NATURAL TAB */}
+        {activeTab === "natural" && <>
+
         {/* WELCOME */}
         <section className="mb-12">
           <div className="bg-blue-950 text-white rounded-2xl p-8 mb-8">
@@ -185,7 +227,32 @@ export default function IntroPage() {
             <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">Part 2</span>
             <div className="flex-1 h-px bg-gray-200"></div>
           </div>
-          <h2 className="text-2xl font-bold text-gray-900 mb-8">Core GovCon Terminology</h2>
+          <h2 className="text-2xl font-bold text-gray-900 mb-6">Core GovCon Terminology</h2>
+
+          {/* KDT Vehicle Priority Order */}
+          <div className="bg-slate-900 rounded-2xl p-6 mb-8">
+            <p className="text-xs font-black text-amber-400 uppercase tracking-widest mb-4">📍 KDT&apos;s Realistic Vehicle On-Ramp Sequence</p>
+            <p className="text-slate-400 text-xs mb-5">Most large GWACs require extensive past performance and six-figure proposal investments. For KDT as a small contractor, pursue in this order:</p>
+            <div className="space-y-3">
+              {([
+                ["1", "Open Market (SAM.gov)", "Zero barrier. Start here for every guard and security services contract. Build your first wins and past performance."],
+                ["2", "GSA MAS", "Most accessible vehicle. 6–12 month application, but unlocks all-agency ordering without full RFP process each time."],
+                ["3", "SBIR/STTR via AFWERX, SOFWERX, DIU", "Funded R&D. Low barrier to first contract. Builds past performance with DoD money while developing your tech capabilities."],
+                ["4", "OTA Consortium Membership", "NSTXL, S2MARTS, C5 — relatively affordable to join. Opens prototype and innovation work outside FAR."],
+                ["5", "8(a) Program (if eligible)", "Massive accelerant if KDT qualifies. 9-year program with sole-source authority up to $4.5M. Check eligibility early."],
+                ["6", "Subcontracting on Prime-Held Vehicles", "Build past performance while larger primes carry the vehicle risk. Best path onto GWACs you can&apos;t access directly yet."],
+                ["7", "Big GWACs", "Alliant 3, Polaris, OASIS+, SEWP VI — pursue after 3–5 years of documented past performance. These are the billion-dollar pipelines, but they require proof."],
+              ] as [string, string, string][]).map(([num, title, note]) => (
+                <div key={num} className="flex items-start gap-4">
+                  <span className="w-7 h-7 bg-amber-500 text-white text-sm font-black rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">{num}</span>
+                  <div>
+                    <p className="font-bold text-white text-sm">{title}</p>
+                    <p className="text-slate-400 text-xs mt-0.5 leading-relaxed">{note}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
 
           <div className="space-y-8">
 
@@ -278,6 +345,211 @@ export default function IntroPage() {
                     </div>
                   ))}
                 </div>
+              </div>
+            </div>
+
+            {/* Contract Vehicles */}
+            <div className="bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm">
+              <div className="bg-slate-800 px-6 py-3">
+                <h3 className="text-white font-semibold text-sm uppercase tracking-wide">Contract Vehicles</h3>
+                <p className="text-slate-400 text-xs mt-0.5">The pathways through which federal agencies buy and vendors win. Know these before touching the simulation.</p>
+              </div>
+
+              {/* Base entries */}
+              <div className="divide-y divide-gray-100">
+                {[
+                  ["Open Market", "Direct competition via SAM.gov — no pre-qualification required. Any registered vendor can bid. Zero barrier to entry. Most security services, guard contracts, and small-value awards are competed this way. Start here for every opportunity until you build vehicle access."],
+                  ["IDIQ", "Indefinite Delivery, Indefinite Quantity. Pre-qualifying umbrella contract. Winners compete for individual Task Orders over a multi-year period (typically 5-year base + options). Getting on the vehicle = pre-approved vendor status. Work flows via TOs competed only among holders. See Module 04."],
+                  ["GSA MAS", "GSA Multiple Award Schedule. Government-wide IDIQ used by all federal agencies to buy commercial goods and services at pre-negotiated pricing. Most accessible vehicle for small businesses. 6–12 month application. Once awarded, all agencies can order from you. See Module 06."],
+                ].map(([term, def]) => (
+                  <div key={term} className="px-6 py-4 flex gap-4">
+                    <span className="font-bold text-gray-900 text-sm w-40 flex-shrink-0">{term}</span>
+                    <span className="text-gray-600 text-sm">{def}</span>
+                  </div>
+                ))}
+              </div>
+
+              {/* GWACs */}
+              <div className="bg-slate-700 px-6 py-2.5 border-t border-slate-600">
+                <h4 className="text-white font-semibold text-xs uppercase tracking-widest">Government-Wide Acquisition Contracts (GWACs)</h4>
+                <p className="text-slate-300 text-xs mt-0.5">GSA, NASA, and NIH vehicles with government-wide ordering authority. Compete for the vehicle first, then for Task Orders.</p>
+              </div>
+              <div className="divide-y divide-gray-100">
+                {[
+                  ["Alliant 2", "GSA large business IT GWAC. Legacy vehicle winding down — being replaced by Alliant 3. Still active for task order competitions among existing holders through remaining PoP."],
+                  ["Alliant 3", "GSA flagship large business IT GWAC. ~$75B ceiling, 10-year period of performance starting March 2026. Replaces Alliant 2. One of the most competitive IT vehicles in the federal government. Requires strong past performance and six-figure proposal investment."],
+                  ["Polaris", "GSA small business IT GWAC with 4 separate pools: Small Business (SB), WOSB, SDVOSB, and 8(a). Each pool is independently competed. KDT-relevant if pursuing IT and security-tech work with applicable socioeconomic certifications."],
+                  ["OASIS+", "GSA flagship non-IT professional services GWAC. No ceiling value — unlimited ordering. Replaces the original OASIS. Covers management consulting, program management, logistics, and professional/engineering services. Highly KDT-relevant for security consulting and program management."],
+                  ["8(a) STARS III", "GSA GWAC for 8(a)-certified small businesses, IT-focused. Government-wide authority. If KDT holds 8(a) certification, this opens an entire pre-competed IT vehicle across all federal agencies."],
+                  ["VETS 2", "GSA GWAC for Service-Disabled Veteran-Owned Small Businesses (SDVOSB), IT-focused. KDT-relevant if the company holds or pursues SDVOSB certification."],
+                  ["CIO-SP4", "NIH GWAC for health IT with government-wide authority. 8 socioeconomic pools. Relevant for KDT pursuing health agency IT, cybersecurity, or security-tech work."],
+                  ["SEWP VI", "NASA GWAC for IT products and product-based services. ~$20B ceiling. Used by all federal agencies. Strong for hardware, software, and cloud product procurement."],
+                  ["ASTRO", "GSA/DoD GWAC for manned, unmanned, and optionally manned platforms and robotics — a family of MA-IDIQs. Relevant for KDT&apos;s emerging autonomous technology and unmanned systems capabilities."],
+                  ["Ascend BPA", "GSA Blanket Purchase Agreement — $5B ceiling — for cloud services. Targets GSA Schedule holders with SIN 518210C. Streamlined path for agencies procuring cloud solutions at scale."],
+                  ["USA Contact", "GWAC for citizen-facing contact center solutions. Government-wide authority. Niche vehicle for agencies with large public-interaction and contact center operations."],
+                ].map(([term, def]) => (
+                  <div key={term} className="px-6 py-4 flex gap-4">
+                    <span className="font-bold text-gray-900 text-sm w-40 flex-shrink-0">{term}</span>
+                    <span className="text-gray-600 text-sm">{def}</span>
+                  </div>
+                ))}
+              </div>
+
+              {/* DoD-Specific Vehicles */}
+              <div className="bg-slate-800 px-6 py-2.5 border-t border-slate-700">
+                <h4 className="text-white font-semibold text-xs uppercase tracking-widest">DoD-Specific Vehicles</h4>
+                <p className="text-slate-400 text-xs mt-0.5">Agency-specific MA-IDIQs available only to DoD buyers. Higher barrier, narrower competition pool than GWACs.</p>
+              </div>
+              <div className="divide-y divide-gray-100">
+                {[
+                  ["SeaPort-NxG", "Navy", "Navy services IDIQ covering technical, engineering, program management, and logistics support. The Navy&apos;s primary vehicle for professional services task orders."],
+                  ["MAPS", "Army", "Marketplace for Acquisition of Professional Services. Consolidates former ITES-3S and RS3 into a unified Army IT and professional services IDIQ. Current primary on-ramp for Army-wide IT and services work."],
+                  ["CHESS ITES-3H/SW2/3S", "Army", "Computer Hardware Enterprise Software Solutions — three vehicles: hardware (3H), software (SW2), and services (3S). Standard Army IT procurement pathways for commercial products and services."],
+                  ["RS3", "Army", "Responsive Strategic Sourcing for Services. C5ISR engineering and RDT&E work. Being absorbed into MAPS but still active for existing task orders. High-value technical and systems integration work."],
+                  ["MSD", "Army", "Modern Software Development IDIQ. $10B ceiling. Agile software development and legacy system modernization. Growing Army priority as digital transformation accelerates."],
+                  ["R2", "Army / CECOM", "CECOM (Communications-Electronics Command) vehicle for engineering, IT, and logistics. Fast 45-day task order award timeline. Strong for Army tech support work at Ft. Meade, APG, and related installations."],
+                  ["Army Research Lab MAC IDIQ", "Army", "Applied research supporting Army Modernization priorities: soldier lethality, vertical lift, networks, and next-generation combat systems. Targets applied R&D-capable companies."],
+                  ["NETCENTS-2", "Air Force", "Air Force networking, infrastructure, and IT enterprise services IDIQ. Standard Air Force vehicle for IT and communications work across AF installations."],
+                  ["Encore III", "DISA", "DISA IT services IDIQ. High-value vehicle for enterprise IT, cloud, cybersecurity, and systems integration across DoD networks."],
+                  ["SETI", "DISA", "DISA Systems Engineering, Technology, and Innovation IDIQ. Covers systems engineering, integration, and emerging technology for DISA programs."],
+                  ["Tradewind Solutions Marketplace", "CDAO", "CDAO (Chief Digital and AI Office) vehicle for AI/ML prototyping and digital transformation. Direct access to DoD AI command. Key vehicle for KDT&apos;s AI and technology capabilities."],
+                ].map(([term, agency, def]) => (
+                  <div key={term} className="px-6 py-4 flex gap-4">
+                    <div className="w-48 flex-shrink-0">
+                      <span className="font-bold text-gray-900 text-sm block">{term}</span>
+                      <span className="text-xs text-slate-500 font-medium">{agency}</span>
+                    </div>
+                    <span className="text-gray-600 text-sm">{def}</span>
+                  </div>
+                ))}
+              </div>
+
+              {/* DoD Intel & Specialized */}
+              <div className="bg-slate-800 px-6 py-2.5 border-t border-slate-700">
+                <h4 className="text-white font-semibold text-xs uppercase tracking-widest">DoD Intel &amp; Specialized Vehicles</h4>
+              </div>
+              <div className="divide-y divide-gray-100">
+                {[
+                  ["SIA", "Defense Intelligence Enterprise IDIQ. ~$17B ceiling. Covers analysis and analytic enabling capabilities across the defense intelligence community. Requires security clearance and DIA-aligned work history."],
+                  ["PRISM", "$1.8B MATOC covering personnel readiness and military systems. DoD-wide with specific scope around readiness support and military system integration."],
+                  ["MDA Contracts", "Missile Defense Agency IT and engineering contracts. Specialized acquisition for MDA sensor programs, IT infrastructure, and systems engineering support."],
+                ].map(([term, def]) => (
+                  <div key={term} className="px-6 py-4 flex gap-4">
+                    <span className="font-bold text-gray-900 text-sm w-40 flex-shrink-0">{term}</span>
+                    <span className="text-gray-600 text-sm">{def}</span>
+                  </div>
+                ))}
+              </div>
+
+              {/* DHS */}
+              <div className="bg-slate-800 px-6 py-2.5 border-t border-slate-700">
+                <h4 className="text-white font-semibold text-xs uppercase tracking-widest">DHS Vehicles</h4>
+              </div>
+              <div className="divide-y divide-gray-100">
+                {[
+                  ["EAGLE II", "DHS-wide IT solutions IDIQ. Recompete underway. Covers IT services and solutions for all DHS components — CBP, TSA, ICE, Secret Service, and Coast Guard."],
+                  ["DHS PACTS", "DHS Program Management, Administrative, Clerical, and Technical Services IDIQ. Non-IT professional services across all DHS components."],
+                  ["DHS S&T Support", "Science &amp; Technology directorate support vehicles. R&D, testing, and technology development for DHS mission needs and emerging threat response."],
+                ].map(([term, def]) => (
+                  <div key={term} className="px-6 py-4 flex gap-4">
+                    <span className="font-bold text-gray-900 text-sm w-40 flex-shrink-0">{term}</span>
+                    <span className="text-gray-600 text-sm">{def}</span>
+                  </div>
+                ))}
+              </div>
+
+              {/* OTA / Innovation Pathways */}
+              <div className="bg-slate-700 px-6 py-2.5 border-t border-slate-600">
+                <h4 className="text-white font-semibold text-xs uppercase tracking-widest">OTA / Innovation Pathways</h4>
+                <p className="text-slate-300 text-xs mt-0.5">Other Transaction Authority — faster and more flexible than FAR. Best early-stage DoD entry point for KDT. No price competition required for prototype OTAs.</p>
+              </div>
+              <div className="divide-y divide-gray-100">
+                {[
+                  ["AFWERX", "Air Force innovation hub. SBIR/STTR and OTA. Strong cyber, autonomy, and training focus. Fast commercial technology on-ramp into Air Force programs."],
+                  ["SOFWERX", "SOCOM innovation hub — direct KDT relevance. Special Operations Forces acquisition accelerator for prototype development and technology transition. Strong match for KDT&apos;s SOF-adjacent mission profile."],
+                  ["NavalX", "Navy innovation hub. Rapid prototyping, agile acquisition, and partnership intermediary for commercial technology into Navy and USMC programs."],
+                  ["Army xTechSearch", "Army innovation prize competition for non-traditional performers. Leads to OTA prototype awards. Lower barrier for new entrants building DoD past performance."],
+                  ["DIU", "Defense Innovation Unit. DoD&apos;s commercial technology accelerator. Uses Commercial Solutions Opening (CSO) process. Fastest path from commercial product to DoD prototype contract."],
+                  ["NSTXL", "National Security Technology Accelerator — largest DoD OTA consortium. Wide technology domain coverage. Membership opens access to all member-agency OTA opportunities across the consortium."],
+                  ["C5", "Command, Control, Communications, Cyber, and Combat Systems OTA consortium. C5ISR-focused capabilities. Strong fit for KDT&apos;s communications and cyber-adjacent work."],
+                  ["S2MARTS", "Sea, Space, and Maritime Research and Technology consortium. OTA pathways for naval systems, undersea warfare, and maritime technology development."],
+                  ["MD5 / NSIN", "National Security Innovation Network (formerly MD5). Bridges academia, venture capital, and startups into DoD. Network-building and talent pipeline more than direct contracting."],
+                ].map(([term, def]) => (
+                  <div key={term} className="px-6 py-4 flex gap-4">
+                    <span className="font-bold text-gray-900 text-sm w-40 flex-shrink-0">{term}</span>
+                    <span className="text-gray-600 text-sm">{def}</span>
+                  </div>
+                ))}
+              </div>
+
+              {/* IAC/MAC, MATOCs, SBIR, misc */}
+              <div className="divide-y divide-gray-100 border-t border-gray-200">
+                {[
+                  ["IAC / MAC", "Indefinite-Delivery Acquisition Contracts / Multiple Award Contracts. Agency-specific MA-IDIQs that pre-qualify multiple vendors for task order competitions. Used across DoD and civilian agencies as the standard multi-year procurement vehicle."],
+                  ["MATOCs", "Multiple Award Task Order Contracts. Used heavily by USACE (Army Corps of Engineers) for construction, environmental, and engineering work. Organized by region and technical specialty."],
+                  ["SBIR / STTR", "Small Business Innovation Research / Small Business Technology Transfer. Phase I (feasibility), Phase II (prototype), Phase III (commercialization). Funded R&D — KDT&apos;s best low-barrier entry to DoD tech contracts. See Module 07."],
+                  ["GSA Stars", "GSA cloud and emerging technology vehicle portfolio. Evolving family of vehicles for cloud-native, AI/ML, and emerging tech procurement across civilian agencies."],
+                  ["The Store", "Flexible OEM/VAR vehicle for products and product-bundled services. Streamlined procurement for commercial products through GSA-vetted resellers."],
+                ].map(([term, def]) => (
+                  <div key={term} className="px-6 py-4 flex gap-4">
+                    <span className="font-bold text-gray-900 text-sm w-40 flex-shrink-0">{term}</span>
+                    <span className="text-gray-600 text-sm">{def}</span>
+                  </div>
+                ))}
+              </div>
+
+              {/* IC Vehicles */}
+              <div className="bg-gray-900 px-6 py-2.5 border-t border-gray-800">
+                <div className="flex items-center gap-3">
+                  <h4 className="text-white font-semibold text-xs uppercase tracking-widest">Intelligence Community (IC) Vehicles</h4>
+                  <span className="text-xs font-bold text-red-400 bg-red-950 border border-red-800 px-2 py-0.5 rounded uppercase tracking-wider">Restricted</span>
+                </div>
+                <p className="text-gray-400 text-xs mt-0.5">Most IC procurement is classified and does not appear on SAM.gov. Requires TS/SCI clearance and an agency sponsor relationship.</p>
+              </div>
+              <div className="divide-y divide-gray-100">
+                {[
+                  ["Glasswing", "CIA acquisition vehicle. Classified scope. Access requires TS/SCI clearance and a CIA program sponsor. Not listed on SAM.gov."],
+                  ["Janus", "NGA (National Geospatial-Intelligence Agency) vehicle. Geospatial intelligence, imagery analysis, and data support. TS/SCI + sponsor required."],
+                  ["Eagle Pass", "Classified IC procurement vehicle. Scope and access requirements are restricted. Entry requires existing agency relationships and full compartmented clearances."],
+                  ["IC Procurement Generally", "Most Intelligence Community procurement is classified and never posted publicly. Entry path: (1) Active TS/SCI clearances across the team. (2) Existing relationship with a cleared agency sponsor. (3) Often, a prime contractor who can sub you into their cleared facility. Build cleared capabilities and certifications first — then pursue IC opportunities through cleared prime relationships."],
+                ].map(([term, def]) => (
+                  <div key={term} className="px-6 py-4 flex gap-4">
+                    <span className="font-bold text-gray-900 text-sm w-48 flex-shrink-0">{term}</span>
+                    <span className="text-gray-600 text-sm">{def}</span>
+                  </div>
+                ))}
+              </div>
+
+              {/* Set-Aside Programs */}
+              <div className="bg-amber-800 px-6 py-2.5 border-t border-amber-700">
+                <h4 className="text-white font-semibold text-xs uppercase tracking-widest">Set-Aside Programs — Eligibility Gates, Not Vehicles</h4>
+                <p className="text-amber-200 text-xs mt-0.5">Certifications that restrict competition to specific vendor categories. You must HOLD the cert before pursuing any set-aside award.</p>
+              </div>
+              <div className="divide-y divide-gray-100">
+                {[
+                  ["SB (Small Business)", "Small Business status under the applicable NAICS size standard. Most common set-aside gate. KDT qualifies as a small business until revenue thresholds are exceeded."],
+                  ["SDVOSB (VetCert)", "Service-Disabled Veteran-Owned Small Business. Must be VetCert-verified through SBA. Unlocks SDVOSB set-asides at VA, DoD, and civilian agencies."],
+                  ["8(a) Program", "SBA 8(a) Business Development Program. 9-year program for socially and economically disadvantaged businesses. Sole-source authority up to $4.5M (DoD) and $4M (civilian). Most powerful small business accelerant in GovCon."],
+                  ["HUBZone", "Historically Underutilized Business Zone. Requires 35% of employees to reside in a qualified HUBZone. Offers price evaluation preferences and access to HUBZone-exclusive competitions."],
+                  ["WOSB (Women-Owned)", "Women-Owned Small Business — 51%+ owned and controlled by women. Unlocks WOSB set-asides across hundreds of NAICS codes. EDWOSB designation adds economically disadvantaged preference."],
+                ].map(([term, def]) => (
+                  <div key={term} className="px-6 py-4 flex gap-4">
+                    <span className="font-bold text-gray-900 text-sm w-44 flex-shrink-0">{term}</span>
+                    <span className="text-gray-600 text-sm">{def}</span>
+                  </div>
+                ))}
+              </div>
+
+              {/* BPA — last per vehicle flow order */}
+              <div className="divide-y divide-gray-100 border-t border-gray-100">
+                {[
+                  ["BPA", "Blanket Purchase Agreement. Pre-negotiated agreement for recurring purchases, typically established against a GSA Schedule. Faster ordering and less paperwork per transaction. Agency-specific — established between an agency and one or more Schedule holders."],
+                ].map(([term, def]) => (
+                  <div key={term} className="px-6 py-4 flex gap-4">
+                    <span className="font-bold text-gray-900 text-sm w-40 flex-shrink-0">{term}</span>
+                    <span className="text-gray-600 text-sm">{def}</span>
+                  </div>
+                ))}
               </div>
             </div>
 
@@ -503,6 +775,33 @@ export default function IntroPage() {
               </div>
             </div>
 
+            {/* KDT Vehicle Priority Order */}
+            <div className="bg-slate-900 rounded-2xl p-8 border border-slate-700">
+              <p className="text-amber-400 text-xs font-black uppercase tracking-widest mb-2">📍 KDT&apos;s Realistic On-Ramp Sequence</p>
+              <p className="text-slate-300 text-sm leading-relaxed mb-6">
+                Most large GWACs (Alliant 3, OASIS+, SEWP VI) require extensive past performance and six-figure proposal investments. For KDT as a small contractor, pursue in this order:
+              </p>
+              <div className="space-y-4">
+                {[
+                  ["Open Market (SAM.gov)", "Zero barrier. Start here for every guard and security services contract."],
+                  ["GSA MAS", "Most accessible vehicle. 6–12 month application, but unlocks all agency ordering."],
+                  ["SBIR/STTR via AFWERX, SOFWERX, DIU", "Funded R&D. Low barrier to first contract. Builds past performance with DoD money."],
+                  ["OTA Consortium Membership", "NSTXL, S2MARTS, C5 — relatively affordable to join. Opens prototype and innovation work."],
+                  ["8(a) Program", "If KDT qualifies, this is a massive accelerant. 9-year program with sole-source authority up to $4.5M."],
+                  ["Subcontracting on prime-held vehicles", "Build past performance while larger primes carry the vehicle risk."],
+                  ["Big GWACs", "Alliant 3, Polaris, OASIS+, SEWP VI — pursue after 3–5 years of documented past performance."],
+                ].map(([step, note], i) => (
+                  <div key={i} className="flex items-start gap-4">
+                    <span className="flex-shrink-0 w-7 h-7 bg-amber-500 text-white text-xs font-black rounded-full flex items-center justify-center mt-0.5">{i + 1}</span>
+                    <div>
+                      <p className="text-white font-bold text-sm">{step}</p>
+                      <p className="text-slate-400 text-sm">{note}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
           </div>
         </section>
 
@@ -665,6 +964,8 @@ export default function IntroPage() {
             </div>
           </div>
         </section>
+
+        </> /* end Natural tab */}
 
         {/* CTA */}
         {progress && !isAlreadyDone ? (
