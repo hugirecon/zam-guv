@@ -275,6 +275,31 @@ export default function IntroPage() {
                   </div>
                 ))}
               </div>
+              {/* PIEE expanded block */}
+              <div className="border-t border-gray-200 px-6 py-5">
+                <div className="flex gap-4 mb-4">
+                  <span className="font-bold text-gray-900 text-sm w-40 flex-shrink-0">PIEE</span>
+                  <span className="text-gray-600 text-sm">Procurement Integrated Enterprise Environment. DoD&apos;s central portal suite for contract administration and post-award functions. After award, virtually everything goes through PIEE — invoicing, document access, performance ratings, and supplier risk scoring.</span>
+                </div>
+                <div className="ml-44 space-y-3">
+                  {[
+                    ["WAWF / iRAPT", "Wide Area Workflow (now iRAPT — Invoicing, Receipt, Acceptance and Property Transfer). The primary system for submitting invoices and receiving reports on DoD contracts. Mandatory on most DoD awards. Submit invoices here; CO and COR accept or reject electronically."],
+                    ["EDA", "Electronic Document Access. View, download, and manage contract documents — solicitations, awards, modifications, and attachments. Your contract lives here after award."],
+                    ["CPARS", "Contractor Performance Assessment Reporting System. COs enter past performance ratings after contract completion. Ratings (Exceptional / Very Good / Satisfactory / Marginal / Unsatisfactory) follow you permanently. A poor CPARS rating can block future awards — manage your COR relationship accordingly."],
+                    ["SPRS", "Supplier Performance Risk System. DoD&apos;s risk scoring database for suppliers. Also where CMMC self-assessment scores (NIST SP 800-171 scores) are posted. Contracting officers check SPRS before award — a missing or low score can disqualify KDT."],
+                    ["JAM", "Joint Appointment Module. Manages CO warrant appointments and delegation of authority. You&apos;ll reference this to confirm who is actually authorized to bind the government."],
+                    ["FAPIIS", "Federal Awardee Performance and Integrity Information System. Public record of contractor integrity issues — terminations for default, administrative agreements, criminal convictions, suspensions, debarments. COs are required to review FAPIIS before any award above $150K."],
+                    ["myInvoice", "Track the status of invoices submitted through WAWF/iRAPT. Shows payment status, rejection reasons, and estimated payment dates."],
+                    ["Reps & Certs", "Online Representations and Certifications. Contractors certify eligibility, size status, compliance, and other contract terms. Largely integrated into SAM.gov, but some DoD workflows still route through PIEE."],
+                    ["MOCAS", "Mechanization of Contract Administration Services. DFAS (Defense Finance and Accounting Service) payment system accessed through PIEE. Processes the actual payment after WAWF acceptance."],
+                  ].map(([name, desc]) => (
+                    <div key={name} className="flex gap-3">
+                      <span className="font-semibold text-gray-800 text-xs w-28 flex-shrink-0 mt-0.5">{name}</span>
+                      <span className="text-gray-500 text-xs leading-relaxed">{desc}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
             </div>
 
             {/* Contract Identifiers */}
