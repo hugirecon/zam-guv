@@ -288,6 +288,8 @@ export default function TrainingPage() {
               <h3 className="text-white font-semibold text-sm">Pre-Submission Checklist</h3>
             </div>
             {[
+              "Compliance flags identified and escalated?",
+              "SCA wage determination located and passed to pricing?",
               "Full PWS/SOW scope addressed?",
               "Every eval criterion answered?",
               "Technical approach specific to this contract?",
