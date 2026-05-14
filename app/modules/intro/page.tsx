@@ -142,6 +142,36 @@ export default function IntroPage() {
         {/* NATURAL TAB */}
         {activeTab === "natural" && <>
 
+        {/* PIPELINE STAGE STRIP */}
+        <div className="mb-10 overflow-x-auto -mx-1 px-1">
+          <div className="flex gap-2 min-w-max pb-1">
+            {([
+              { id: "nat-market",   num: "1", label: "The Market",       sub: "Landscape & agencies",           color: "bg-slate-700 hover:bg-slate-600" },
+              { id: "nat-register", num: "2", label: "Register",         sub: "SAM.gov, UEI, CAGE",             color: "bg-blue-700 hover:bg-blue-600" },
+              { id: "nat-vehicles", num: "3", label: "Vehicles & Types", sub: "How contracts are structured",   color: "bg-indigo-700 hover:bg-indigo-600" },
+              { id: "nat-qualify",  num: "4", label: "Find & Qualify",   sub: "Solicitations, set-asides",      color: "bg-violet-700 hover:bg-violet-600" },
+              { id: "nat-propose",  num: "5", label: "Pursue & Propose", sub: "Roles, pricing, writing",        color: "bg-amber-700 hover:bg-amber-600" },
+              { id: "nat-execute",  num: "6", label: "Win & Execute",    sub: "PIEE, CPARS, compliance",        color: "bg-emerald-700 hover:bg-emerald-600" },
+            ] as { id: string; num: string; label: string; sub: string; color: string }[]).map(({ id, num, label, sub, color }) => (
+              <button
+                key={id}
+                onClick={() => {
+                  const el = document.getElementById(id);
+                  if (el) {
+                    const y = el.getBoundingClientRect().top + window.scrollY - 88;
+                    window.scrollTo({ top: y, behavior: "smooth" });
+                  }
+                }}
+                className={`${color} text-white rounded-lg px-4 py-2.5 text-left transition-opacity flex-shrink-0`}
+              >
+                <p className="font-bold text-xs whitespace-nowrap">{num}. {label}</p>
+                <p className="text-white/70 text-xs whitespace-nowrap">{sub}</p>
+              </button>
+            ))}
+          </div>
+          <p className="text-xs text-gray-400 mt-2 ml-0.5">Pipeline stages — click to jump to any section.</p>
+        </div>
+
         {/* WELCOME */}
         <section className="mb-12">
           <div className="bg-blue-950 text-white rounded-2xl p-8 mb-8">
@@ -173,7 +203,7 @@ export default function IntroPage() {
         </section>
 
         {/* PART 1 */}
-        <section className="mb-12">
+        <section id="nat-market" className="mb-12 scroll-mt-24">
           <div className="flex items-center gap-4 mb-6">
             <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">Part 1</span>
             <div className="flex-1 h-px bg-gray-200"></div>
@@ -257,7 +287,7 @@ export default function IntroPage() {
           <div className="space-y-8">
 
             {/* Portals & Systems */}
-            <div className="bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm">
+            <div id="nat-register" className="bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm scroll-mt-24">
               <div className="bg-slate-800 px-6 py-3">
                 <h3 className="text-white font-semibold text-sm uppercase tracking-wide">Portals & Systems</h3>
               </div>
@@ -372,7 +402,7 @@ export default function IntroPage() {
             </div>
 
             {/* Contract Vehicles */}
-            <div className="bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm">
+            <div id="nat-vehicles" className="bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm scroll-mt-24">
               <div className="bg-slate-800 px-6 py-3">
                 <h3 className="text-white font-semibold text-sm uppercase tracking-wide">Contract Vehicles</h3>
                 <p className="text-slate-400 text-xs mt-0.5">The pathways through which federal agencies buy and vendors win. Know these before touching the simulation.</p>
@@ -547,7 +577,7 @@ export default function IntroPage() {
             </div>
 
             {/* Solicitation Types */}
-            <div className="bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm">
+            <div id="nat-qualify" className="bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm scroll-mt-24">
               <div className="bg-slate-800 px-6 py-3">
                 <h3 className="text-white font-semibold text-sm uppercase tracking-wide">Solicitation Types</h3>
               </div>
@@ -621,7 +651,7 @@ export default function IntroPage() {
             </div>
 
             {/* Key Roles & Personnel — NEW */}
-            <div className="bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm">
+            <div id="nat-propose" className="bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm scroll-mt-24">
               <div className="bg-indigo-800 px-6 py-3">
                 <h3 className="text-white font-semibold text-sm uppercase tracking-wide">Key Roles & Personnel</h3>
               </div>
@@ -677,7 +707,7 @@ export default function IntroPage() {
             </div>
 
             {/* Financial Terms — NEW */}
-            <div className="bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm">
+            <div id="nat-execute" className="bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm scroll-mt-24">
               <div className="bg-emerald-800 px-6 py-3">
                 <h3 className="text-white font-semibold text-sm uppercase tracking-wide">Financial & Pricing Terms</h3>
               </div>
