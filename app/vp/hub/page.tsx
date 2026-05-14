@@ -10,6 +10,17 @@ interface User {
   role: string;
 }
 
+interface LeaderboardEntry {
+  rank: number | null;
+  userId: string;
+  name: string;
+  compositeScore: number | null;
+  proposalCount: number;
+  vehiclesCompleted: number;
+  bestScore: number | null;
+  isCurrentUser: boolean;
+}
+
 interface VehicleStatus {
   sessionId: string;
   mode: string;
@@ -117,19 +128,22 @@ export default function VPHub() {
   const [statuses, setStatuses] = useState<StatusMap>({});
   const [loading, setLoading] = useState(true);
   const [entering, setEntering] = useState<string | null>(null);
+  const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
 
   useEffect(() => {
     Promise.all([
       fetch("/api/auth/me").then((r) => r.json()),
       fetch("/api/sessions/status").then((r) => r.json()),
+      fetch("/api/leaderboard").then((r) => r.json()),
     ])
-      .then(([meData, statusData]) => {
+      .then(([meData, statusData, lbData]) => {
         if (!meData.user || meData.user.role !== "vp") {
           router.replace("/login");
           return;
         }
         setUser(meData.user);
         setStatuses(statusData);
+        setLeaderboard(lbData.entries ?? []);
       })
       .catch(() => router.replace("/login"))
       .finally(() => setLoading(false));
@@ -206,7 +220,7 @@ export default function VPHub() {
       </div>
 
       {/* Cards grid — 3 top, 2 bottom */}
-      <div className="max-w-7xl mx-auto px-6 pb-16">
+      <div className="max-w-7xl mx-auto px-6 pb-6">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
           {VEHICLES.slice(0, 3).map((v) => (
             <VehicleCard
@@ -229,6 +243,102 @@ export default function VPHub() {
             />
           ))}
         </div>
+      </div>
+
+      {/* LEADERBOARD */}
+      <div className="max-w-7xl mx-auto px-6 pb-20">
+        <div className="mb-6 flex items-center gap-4">
+          <h2 className="text-xl font-bold text-white">🏆 Leaderboard</h2>
+          <div className="flex-1 h-px bg-slate-700" />
+          <span className="text-slate-500 text-xs">Ranked by composite AI score</span>
+        </div>
+
+        {leaderboard.length === 0 ? (
+          <div className="bg-slate-800/40 border border-slate-700 rounded-2xl p-8 text-center">
+            <p className="text-slate-400 text-sm">No scores yet. Complete a simulation to appear on the board.</p>
+          </div>
+        ) : (
+          <div className="bg-slate-800/40 border border-slate-700 rounded-2xl overflow-hidden">
+            {/* Header */}
+            <div className="grid grid-cols-12 gap-4 px-6 py-3 border-b border-slate-700 bg-slate-900/50">
+              <div className="col-span-1 text-xs font-bold text-slate-500 uppercase tracking-wider">#</div>
+              <div className="col-span-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Name</div>
+              <div className="col-span-2 text-xs font-bold text-slate-500 uppercase tracking-wider text-right">Score</div>
+              <div className="col-span-2 text-xs font-bold text-slate-500 uppercase tracking-wider text-right">Best</div>
+              <div className="col-span-2 text-xs font-bold text-slate-500 uppercase tracking-wider text-right">Proposals</div>
+              <div className="col-span-1 text-xs font-bold text-slate-500 uppercase tracking-wider text-right">Vehicles</div>
+            </div>
+
+            {leaderboard.map((entry, i) => {
+              const rankMedal = entry.rank === 1 ? "🥇" : entry.rank === 2 ? "🥈" : entry.rank === 3 ? "🥉" : null;
+              const rowBg = entry.isCurrentUser
+                ? "bg-amber-500/10 border-l-4 border-l-amber-500"
+                : i % 2 === 0
+                ? "bg-slate-800/20"
+                : "";
+
+              return (
+                <div
+                  key={entry.userId}
+                  className={`grid grid-cols-12 gap-4 px-6 py-4 items-center border-b border-slate-700/50 last:border-0 transition-colors ${rowBg}`}
+                >
+                  {/* Rank */}
+                  <div className="col-span-1">
+                    {rankMedal ? (
+                      <span className="text-lg leading-none">{rankMedal}</span>
+                    ) : (
+                      <span className="text-slate-500 font-mono text-sm">{entry.rank ?? "—"}</span>
+                    )}
+                  </div>
+
+                  {/* Name */}
+                  <div className="col-span-4 flex items-center gap-2">
+                    <span className={`text-sm font-semibold ${
+                      entry.isCurrentUser ? "text-amber-300" : "text-slate-200"
+                    }`}>
+                      {entry.name}
+                    </span>
+                    {entry.isCurrentUser && (
+                      <span className="text-xs font-bold bg-amber-500/20 text-amber-400 border border-amber-500/40 px-1.5 py-0.5 rounded-full">You</span>
+                    )}
+                  </div>
+
+                  {/* Composite Score */}
+                  <div className="col-span-2 text-right">
+                    {entry.compositeScore !== null ? (
+                      <span className={`text-sm font-bold ${
+                        entry.compositeScore >= 80 ? "text-emerald-400" :
+                        entry.compositeScore >= 60 ? "text-blue-400" :
+                        entry.compositeScore >= 40 ? "text-amber-400" : "text-red-400"
+                      }`}>
+                        {entry.compositeScore}
+                      </span>
+                    ) : (
+                      <span className="text-slate-600 text-sm">—</span>
+                    )}
+                  </div>
+
+                  {/* Best Score */}
+                  <div className="col-span-2 text-right">
+                    <span className="text-slate-400 text-sm">
+                      {entry.bestScore !== null ? entry.bestScore : "—"}
+                    </span>
+                  </div>
+
+                  {/* Proposal Count */}
+                  <div className="col-span-2 text-right">
+                    <span className="text-slate-400 text-sm">{entry.proposalCount}</span>
+                  </div>
+
+                  {/* Vehicles */}
+                  <div className="col-span-1 text-right">
+                    <span className="text-slate-400 text-sm">{entry.vehiclesCompleted}</span>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
       </div>
     </div>
   );
