@@ -1,7 +1,7 @@
 import Link from "next/link";
 
 export const metadata = {
-  title: "Module 05 — Other Transaction Authority (OTA) | Zam.guv",
+  title: "OTA Sub-Module — Other Transaction Authority (OTA) | Zam.guv",
 };
 
 export default function OTAPage() {
@@ -19,7 +19,7 @@ export default function OTAPage() {
             </Link>
           </div>
           <div className="flex items-center gap-3">
-            <span className="text-xs font-bold text-cyan-700 bg-cyan-50 border border-cyan-200 px-2.5 py-1 rounded-full uppercase tracking-widest">Module 05</span>
+            <span className="text-xs font-bold text-cyan-700 bg-cyan-50 border border-cyan-200 px-2.5 py-1 rounded-full uppercase tracking-widest">OTA Sub-Module</span>
             <span className="text-sm text-gray-500 hidden sm:block">Other Transaction Authority (OTA)</span>
           </div>
         </div>
@@ -29,7 +29,7 @@ export default function OTAPage() {
 
         {/* Title block */}
         <div className="mb-12 pb-10 border-b border-gray-200">
-          <p className="text-cyan-600 text-sm font-semibold uppercase tracking-widest mb-3">Knight Division Tactical · Module 05</p>
+          <p className="text-cyan-600 text-sm font-semibold uppercase tracking-widest mb-3">Knight Division Tactical · OTA Sub-Module</p>
           <h1 className="text-4xl font-bold text-gray-900 mb-4 leading-tight">Other Transaction Authority (OTA)</h1>
           <div className="flex flex-wrap gap-4 text-sm text-gray-500">
             <span className="flex items-center gap-1.5"><span className="w-1.5 h-1.5 bg-cyan-500 rounded-full"></span>20–25 min</span>

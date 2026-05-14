@@ -1,7 +1,7 @@
 import Link from "next/link";
 
 export const metadata = {
-  title: "Module 06 — GSA Schedule (MAS) | Zam.guv",
+  title: "GSA Sub-Module — GSA Schedule (MAS) | Zam.guv",
 };
 
 export default function GSAPage() {
@@ -19,7 +19,7 @@ export default function GSAPage() {
             </Link>
           </div>
           <div className="flex items-center gap-3">
-            <span className="text-xs font-bold text-violet-700 bg-violet-50 border border-violet-200 px-2.5 py-1 rounded-full uppercase tracking-widest">Module 06</span>
+            <span className="text-xs font-bold text-violet-700 bg-violet-50 border border-violet-200 px-2.5 py-1 rounded-full uppercase tracking-widest">GSA Sub-Module</span>
             <span className="text-sm text-gray-500 hidden sm:block">GSA Schedule (MAS)</span>
           </div>
         </div>
@@ -29,7 +29,7 @@ export default function GSAPage() {
 
         {/* Title block */}
         <div className="mb-12 pb-10 border-b border-gray-200">
-          <p className="text-violet-600 text-sm font-semibold uppercase tracking-widest mb-3">Knight Division Tactical · Module 06</p>
+          <p className="text-violet-600 text-sm font-semibold uppercase tracking-widest mb-3">Knight Division Tactical · GSA Sub-Module</p>
           <h1 className="text-4xl font-bold text-gray-900 mb-4 leading-tight">GSA Schedule (MAS)</h1>
           <div className="flex flex-wrap gap-4 text-sm text-gray-500">
             <span className="flex items-center gap-1.5"><span className="w-1.5 h-1.5 bg-violet-500 rounded-full"></span>15–20 min</span>

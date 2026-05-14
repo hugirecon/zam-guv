@@ -1,7 +1,7 @@
 import Link from "next/link";
 
 export const metadata = {
-  title: "Module 07 Training — SBIR/STTR Proposal Training | Zam.guv",
+  title: "SBIR Sub-Module Training — SBIR/STTR Proposal Training | Zam.guv",
 };
 
 export default function SBIRTrainingPage() {
@@ -19,7 +19,7 @@ export default function SBIRTrainingPage() {
             </Link>
           </div>
           <div className="flex items-center gap-3">
-            <span className="text-xs font-bold text-orange-700 bg-orange-50 border border-orange-200 px-2.5 py-1 rounded-full uppercase tracking-widest">Module 07</span>
+            <span className="text-xs font-bold text-orange-700 bg-orange-50 border border-orange-200 px-2.5 py-1 rounded-full uppercase tracking-widest">SBIR Sub-Module</span>
             <span className="text-sm text-gray-500 hidden sm:block">SBIR/STTR Proposal Training</span>
           </div>
         </div>
@@ -29,7 +29,7 @@ export default function SBIRTrainingPage() {
 
         {/* Title block */}
         <div className="mb-10 pb-10 border-b border-gray-200">
-          <p className="text-orange-600 text-sm font-semibold uppercase tracking-widest mb-3">Knight Division Tactical · Module 07</p>
+          <p className="text-orange-600 text-sm font-semibold uppercase tracking-widest mb-3">Knight Division Tactical · SBIR Sub-Module</p>
           <h1 className="text-4xl font-bold text-gray-900 mb-4 leading-tight">SBIR/STTR Proposal Training</h1>
           <div className="flex flex-wrap gap-4 text-sm text-gray-500 mb-6">
             <span className="flex items-center gap-1.5"><span className="w-1.5 h-1.5 bg-orange-500 rounded-full"></span>Guided walkthrough — Phase I proposal focus</span>

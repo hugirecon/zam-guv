@@ -1,3 +1,5 @@
+"use client";
+import { useState } from "react";
 function VehicleCard({
   name,
   abbr,
@@ -90,8 +92,6 @@ function VehicleList({
   );
 }
 
-"use client";
-import { useState } from "react";
 
 function ViewToggle({ view, setView }: { view: "natural" | "timeline"; setView: (v: "natural" | "timeline") => void }) {
   return (

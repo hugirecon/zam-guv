@@ -1,7 +1,7 @@
 import Link from "next/link";
 
 export const metadata = {
-  title: "Module 04 — IDIQ Contracts & Task Orders | Zam.guv",
+  title: "IDIQ Sub-Module — IDIQ Contracts & Task Orders | Zam.guv",
 };
 
 export default function IDIQPage() {
@@ -19,7 +19,7 @@ export default function IDIQPage() {
             </Link>
           </div>
           <div className="flex items-center gap-3">
-            <span className="text-xs font-bold text-indigo-700 bg-indigo-50 border border-indigo-200 px-2.5 py-1 rounded-full uppercase tracking-widest">Module 04</span>
+            <span className="text-xs font-bold text-indigo-700 bg-indigo-50 border border-indigo-200 px-2.5 py-1 rounded-full uppercase tracking-widest">IDIQ Sub-Module</span>
             <span className="text-sm text-gray-500 hidden sm:block">IDIQ Contracts & Task Orders</span>
           </div>
         </div>
@@ -29,7 +29,7 @@ export default function IDIQPage() {
 
         {/* Title block */}
         <div className="mb-12 pb-10 border-b border-gray-200">
-          <p className="text-indigo-600 text-sm font-semibold uppercase tracking-widest mb-3">Knight Division Tactical · Module 04</p>
+          <p className="text-indigo-600 text-sm font-semibold uppercase tracking-widest mb-3">Knight Division Tactical · IDIQ Sub-Module</p>
           <h1 className="text-4xl font-bold text-gray-900 mb-4 leading-tight">IDIQ Contracts & Task Orders</h1>
           <div className="flex flex-wrap gap-4 text-sm text-gray-500">
             <span className="flex items-center gap-1.5"><span className="w-1.5 h-1.5 bg-indigo-500 rounded-full"></span>20–25 minutes</span>

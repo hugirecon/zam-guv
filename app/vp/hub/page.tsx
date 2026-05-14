@@ -34,7 +34,7 @@ type StatusMap = Record<string, VehicleStatus | null>;
 const VEHICLES = [
   {
     key: "Standard",
-    module: "Module 03",
+    module: "Standard",
     name: "Standard",
     subtitle: "GovCon Simulation",
     contracts: "52 contracts",
@@ -48,7 +48,7 @@ const VEHICLES = [
   },
   {
     key: "IDIQ",
-    module: "Module 04",
+    module: "IDIQ",
     name: "IDIQ",
     subtitle: "Task Order Simulation",
     contracts: "25 contracts",
@@ -62,7 +62,7 @@ const VEHICLES = [
   },
   {
     key: "OTA",
-    module: "Module 05",
+    module: "OTA",
     name: "OTA",
     subtitle: "Prototype Simulation",
     contracts: "25 contracts",
@@ -76,7 +76,7 @@ const VEHICLES = [
   },
   {
     key: "GSA",
-    module: "Module 06",
+    module: "GSA",
     name: "GSA",
     subtitle: "Schedule Simulation",
     contracts: "25 contracts",
@@ -90,7 +90,7 @@ const VEHICLES = [
   },
   {
     key: "SBIR",
-    module: "Module 07",
+    module: "SBIR",
     name: "SBIR",
     subtitle: "R&D Simulation",
     contracts: "25 contracts",
@@ -215,7 +215,7 @@ export default function VPHub() {
       <div className="max-w-7xl mx-auto px-6 pt-12 pb-8 text-center">
         <h1 className="text-4xl font-bold text-white mb-3">VP Simulation Hub</h1>
         <p className="text-slate-400 text-lg">
-          Choose a vehicle track to enter the simulation. Each track is a separate 30-minute timed assessment.
+          Choose a sub-module to enter the simulation. Each sub-module is a separate 30-minute timed assessment.
         </p>
       </div>
 
