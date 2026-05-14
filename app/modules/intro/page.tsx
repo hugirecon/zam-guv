@@ -129,7 +129,7 @@ export default function IntroPage() {
           <p className="text-xs text-gray-400 mt-2 ml-1">
             {activeTab === "all" && "Terminology organized by contracting year — what you encounter at each stage of a healthy pipeline."}
             {activeTab === "vehicles" && "Reference by contract vehicle type — know the structure before you pursue."}
-            {activeTab === "compliance" && "Regulatory and compliance framework — grouped by domain."}
+            {activeTab === "compliance" && "Compliance frameworks grouped by type — NIST/CMMC, regulatory, CUI, clearances, export controls, financial."}
           </p>
         </div>
 

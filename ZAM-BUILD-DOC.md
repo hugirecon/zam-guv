@@ -40,7 +40,7 @@ The platform has seven modules, each tied to a specific government contracting v
 | Database | Neon Serverless PostgreSQL |
 | ORM | Prisma with `@prisma/adapter-neon` |
 | Auth | JWT via `jsonwebtoken`, bcrypt passwords |
-| AI Scoring | Anthropic Claude (`@anthropic-ai/sdk`) |
+| AI Scoring | Anthropic Claude — model: `claude-opus-4-5` (`@anthropic-ai/sdk`) |
 | Hosting | Vercel (auto-deploy from `main` branch) |
 | Styling | Tailwind CSS |
 
@@ -128,7 +128,7 @@ submittedAt        DateTime?
 autoSubmitted      Boolean — true if force-submitted when session expired
 aiScore            Float? — 0–100 composite score
 aiScoreBreakdown   String? — JSON: { technical, management, pricing, past_performance, compliance }
-aiFeedback         String? — narrative feedback from Claude
+aiFeedback         String? — JSON: { strengths[], weaknesses[], recommendation, feedback }
 aiScoredAt         DateTime?
 createdAt          DateTime
 updatedAt          DateTime
@@ -461,7 +461,7 @@ Six-section proposal form accessed from the contract detail page. Tab-navigated:
 
 **Save Draft** → `POST /api/proposals` — upserts proposal as `status: "draft"`. One proposal per contract per user enforced by unique constraint.
 
-**Submit Proposal** → `POST /api/proposals/[id]/submit` — marks submitted, triggers synchronous AI scoring, advances user's `currentModule` to 4 if assessment mode.
+**Submit Proposal** → `POST /api/proposals/[id]/submit` — marks submitted, triggers synchronous AI scoring. In assessment mode, advances user's `currentModule` to 4 and sets `module3Done: true`.
 
 **Training mode enhancement:** "Load Example Proposal" button populates the form with a gold-standard contract-specific example for learning. AI feedback displays inline with auto-scroll after training-mode submissions. Score is shown in a sticky panel with a "Revise & Resubmit" option.
 
@@ -495,13 +495,15 @@ Counts down from `session.expiresAt`. Updates every second client-side.
 ## AI Scoring
 
 **Triggered by:** `POST /api/proposals/[id]/submit`  
-**Model:** Anthropic Claude  
-**Scoring dimensions:** Technical Credibility, Management Approach, Pricing, Past Performance, Compliance Awareness  
-**Output:** Composite `aiScore` (0–100) + per-dimension `aiScoreBreakdown` (JSON) + `aiFeedback` (narrative)
+**Model:** `claude-opus-4-5` (via `@anthropic-ai/sdk`)  
+**Scoring dimensions:** `technical`, `management`, `pricing`, `past_performance`, `compliance`  
+**Output:** Composite `aiScore` (0–100) + per-dimension `aiScoreBreakdown` (JSON) + `aiFeedback` (JSON)
 
 Claude evaluates each proposal against the actual contract's description, requirements list, NAICS code, set-aside type, and value range. The evaluation is contract-specific — a generic proposal scores poorly by design.
 
 Scoring is **synchronous** — called with `await` before the API response is returned. This is intentional: Vercel terminates async fire-and-forget tasks after the response is sent.
+
+`aiFeedback` is stored as a JSON object with four fields: `strengths` (string array), `weaknesses` (string array), `recommendation` (one of: "Award" / "High Competitive" / "Competitive" / "Non-Competitive"), and `feedback` (narrative string).
 
 If `ANTHROPIC_API_KEY` is not set, scoring is silently skipped. Proposals are submitted and marked as such, but `aiScore` remains `null`. They appear in admin proposals view as submitted but unscored and do not affect the leaderboard.
 
@@ -606,7 +608,7 @@ Create new VP via form at the top: name, email, password. Creates with `role: "v
 | GET | `/api/admin/sessions` | All sessions with user data |
 | GET | `/api/admin/users` | All VP users with activity data |
 | POST | `/api/admin/users` | Create VP account |
-| DELETE | `/api/admin/users/[id]` | Delete VP account |
+| DELETE | `/api/admin/users` | Delete VP account (user `id` passed in request body, not URL) |
 
 ---
 
@@ -630,7 +632,7 @@ npx ts-node --compiler-options '{"module":"CommonJS"}' prisma/seed.ts
 npx ts-node --compiler-options '{"module":"CommonJS"}' prisma/seed-vehicles.ts
 ```
 
-Note: `seed-vehicles.ts` must run after `seed.ts`. Both scripts are idempotent (upsert by `solicNumber`).
+Note: `seed-vehicles.ts` must run after `seed.ts`. Both scripts are idempotent (upsert by `solicNumber`). The `prisma.seed` entry in `package.json` only registers `seed.ts` — run `seed-vehicles.ts` manually using the same `ts-node` command.
 
 ---
 
@@ -696,14 +698,15 @@ npm run dev        # starts on localhost:3000
 | Name | Email | Password | Role | Notes |
 |---|---|---|---|---|
 | System Administrator | admin@zam.guv | Admin@2026! | admin | Admin portal access |
-| Demetrios | demetrios@kdt.mil | KDT-Demo2026! | vp | Multiple sessions across vehicles |
-| Clark | clark@kdt.mil | KDT-Demo2026! | vp | Active |
-| Simeon | simeon@kdt.mil | KDT-Demo2026! | vp | Minimal activity |
-| Demetrios Tsirigotis | demetrios.tsirigotis@kdt.guv | (set on creation) | vp | — |
-| Clark Donalson | clark.donalson@kdt.guv | (set on creation) | vp | — |
-| Austin Losurdo | austin.losurdo@kdt.guv | (set on creation) | vp | — |
-| Nicholas Norman | nicholas.norman@kdt.guv | (set on creation) | vp | Active |
-| Santiago Telleria | santiago.telleria@kdt.guv | (set on creation) | vp | Active |
-| Matthew McCalla | matthew.mccalla@kdt.guv | (set on creation) | vp | Active |
+VP test users are **not seeded** — they are created via Admin → Users. The seed script only creates the admin account. The following accounts exist in the live Neon DB (created via admin UI):
 
-New VPs can be created from the Admin → Users page. No seed script required.
+| Name | Email | Role | Notes |
+|---|---|---|---|
+| Demetrios Tsirigotis | demetrios.tsirigotis@kdt.guv | vp | — |
+| Clark Donalson | clark.donalson@kdt.guv | vp | — |
+| Austin Losurdo | austin.losurdo@kdt.guv | vp | — |
+| Nicholas Norman | nicholas.norman@kdt.guv | vp | Active |
+| Santiago Telleria | santiago.telleria@kdt.guv | vp | Active |
+| Matthew McCalla | matthew.mccalla@kdt.guv | vp | Active |
+
+Passwords are set at creation time by the admin. To reset a password, delete and recreate the user via Admin → Users.
