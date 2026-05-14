@@ -5,7 +5,7 @@ import Link from "next/link";
 import VehiclesTab from "./components/VehiclesTab";
 import ComplianceTab from "./components/ComplianceTab";
 
-type Tab = "natural" | "vehicles" | "compliance";
+type Tab = "all" | "vehicles" | "compliance";
 
 interface Progress {
   currentModule: number;
@@ -18,7 +18,7 @@ export default function IntroPage() {
   const router = useRouter();
   const [progress, setProgress] = useState<Progress | null>(null);
   const [advancing, setAdvancing] = useState(false);
-  const [activeTab, setActiveTab] = useState<Tab>("natural");
+  const [activeTab, setActiveTab] = useState<Tab>("all");
 
   useEffect(() => {
     fetch("/api/user/progress", { credentials: "include" })
@@ -109,7 +109,7 @@ export default function IntroPage() {
         <div className="mb-10">
           <div className="inline-flex bg-gray-100 rounded-xl p-1 gap-1">
             {([
-              { id: "natural" as Tab, label: "Natural", icon: "📅" },
+              { id: "all" as Tab, label: "All", icon: "📅" },
               { id: "vehicles" as Tab, label: "Contract Vehicles", icon: "🚗" },
               { id: "compliance" as Tab, label: "Compliance", icon: "🔒" },
             ]).map(({ id, label, icon }) => (
@@ -127,7 +127,7 @@ export default function IntroPage() {
             ))}
           </div>
           <p className="text-xs text-gray-400 mt-2 ml-1">
-            {activeTab === "natural" && "Terminology organized by contracting year — what you encounter at each stage of a healthy pipeline."}
+            {activeTab === "all" && "Terminology organized by contracting year — what you encounter at each stage of a healthy pipeline."}
             {activeTab === "vehicles" && "Reference by contract vehicle type — know the structure before you pursue."}
             {activeTab === "compliance" && "Regulatory and compliance framework — grouped by domain."}
           </p>
@@ -139,8 +139,8 @@ export default function IntroPage() {
         {/* COMPLIANCE TAB */}
         {activeTab === "compliance" && <ComplianceTab />}
 
-        {/* NATURAL TAB */}
-        {activeTab === "natural" && <>
+        {/* ALL TAB */}
+        {activeTab === "all" && <>
 
         {/* PIPELINE STAGE STRIP */}
         <div className="mb-10 overflow-x-auto -mx-1 px-1">
