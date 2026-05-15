@@ -109,7 +109,7 @@ export default function IntroPage() {
         <div className="mb-10">
           <div className="inline-flex bg-gray-100 rounded-xl p-1 gap-1">
             {([
-              { id: "all" as Tab, label: "All", icon: "📅" },
+              { id: "all" as Tab, label: "Overview", icon: "📅" },
               { id: "vehicles" as Tab, label: "Contract Vehicles", icon: "🚗" },
               { id: "compliance" as Tab, label: "Compliance", icon: "🔒" },
             ]).map(({ id, label, icon }) => (

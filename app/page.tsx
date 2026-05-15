@@ -27,13 +27,13 @@ export default function Home() {
               GovCon Assessment System
             </h1>
             <p className="text-slate-400 text-lg max-w-xl mx-auto">
-              Seven-module assessment system: core GovCon track plus four vehicle-specific deep-dive simulations.
+              3-module GovCon assessment system plus 4 vehicle-specific sub-module simulations.
             </p>
           </div>
 
           {/* ── Core Track ── */}
           <div className="mb-12">
-            <h2 className="text-sm font-bold text-slate-300 uppercase tracking-widest mb-6">Core Track</h2>
+            <h2 className="text-sm font-bold text-slate-300 uppercase tracking-widest mb-6">Core Track — 3 Modules</h2>
             <div className="grid md:grid-cols-3 gap-6">
 
               {/* Module 01 */}
@@ -51,6 +51,9 @@ export default function Home() {
                   <div className="flex items-center gap-2"><span className="w-1.5 h-1.5 bg-emerald-400 rounded-full flex-shrink-0"></span>Core terminology (NAICS, set-asides, contract types)</div>
                   <div className="flex items-center gap-2"><span className="w-1.5 h-1.5 bg-emerald-400 rounded-full flex-shrink-0"></span>How to read a contract listing</div>
                   <div className="flex items-center gap-2"><span className="w-1.5 h-1.5 bg-emerald-400 rounded-full flex-shrink-0"></span>What you're being assessed on</div>
+                </div>
+                <div className="flex items-center gap-2 mb-3">
+                  <span className="text-xs text-slate-400">🔓 No login required</span>
                 </div>
                 <Link
                   href="/modules/intro"
@@ -76,6 +79,9 @@ export default function Home() {
                   <div className="flex items-center gap-2"><span className="w-1.5 h-1.5 bg-amber-400 rounded-full flex-shrink-0"></span>Stage 3: Proposal writing</div>
                   <div className="flex items-center gap-2"><span className="w-1.5 h-1.5 bg-amber-400 rounded-full flex-shrink-0"></span>Stage 4: Submission</div>
                 </div>
+                <div className="flex items-center gap-2 mb-3">
+                  <span className="text-xs text-amber-400">🔒 Login required</span>
+                </div>
                 <Link
                   href="/modules/training"
                   className="block text-center bg-amber-600 hover:bg-amber-500 text-white font-semibold py-3 px-6 rounded-lg transition-colors text-sm"
@@ -100,6 +106,9 @@ export default function Home() {
                   <div className="flex items-center gap-2"><span className="w-1.5 h-1.5 bg-red-400 rounded-full flex-shrink-0"></span>Write and submit proposals</div>
                   <div className="flex items-center gap-2"><span className="w-1.5 h-1.5 bg-red-400 rounded-full flex-shrink-0"></span>AI-scored on 4 dimensions</div>
                 </div>
+                <div className="flex items-center gap-2 mb-3">
+                  <span className="text-xs text-red-400">🔒 Login required · Timer starts immediately</span>
+                </div>
                 <Link
                   href="/login"
                   className="block text-center bg-red-700 hover:bg-red-600 text-white font-semibold py-3 px-6 rounded-lg transition-colors text-sm"
@@ -111,18 +120,18 @@ export default function Home() {
             </div>
           </div>
 
-          {/* ── Vehicle-Specific Tracks ── */}
+          {/* ── Sub-Modules ── */}
           <div className="mb-10">
-            <div className="mb-6">
-              <h2 className="text-sm font-bold text-slate-300 uppercase tracking-widest mb-1">Vehicle-Specific Tracks</h2>
-              <p className="text-slate-500 text-sm">Deep-dive simulations for each major contract vehicle</p>
+            <div className="mb-6 pt-6 border-t border-white/10">
+              <h2 className="text-sm font-bold text-slate-300 uppercase tracking-widest mb-1">Sub-Modules</h2>
+              <p className="text-slate-500 text-sm">Optional vehicle-specific deep-dives — complete after the core 3 modules · All require login</p>
             </div>
             <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
 
-              {/* Module 04 — IDIQ */}
-              <div className="bg-white/5 border border-white/10 rounded-2xl p-7 flex flex-col hover:bg-white/8 transition-colors group">
+              {/* IDIQ Sub-Module */}
+              <div className="bg-white/3 border border-white/8 rounded-2xl p-6 flex flex-col hover:bg-white/6 transition-colors group">
                 <div className="flex items-center gap-3 mb-5">
-                  <span className="text-xs font-bold text-indigo-400 uppercase tracking-widest bg-indigo-950 border border-indigo-800 px-2.5 py-1 rounded-full">Module 04</span>
+                  <span className="text-xs font-bold text-indigo-400 uppercase tracking-widest bg-indigo-950 border border-indigo-800 px-2.5 py-1 rounded-full">IDIQ Sub-Module</span>
                 </div>
                 <h2 className="text-lg font-bold text-white mb-2">IDIQ Contracts &amp; Task Orders</h2>
                 <p className="text-slate-400 text-sm mb-1">20-25 min · Login required for simulation</p>
@@ -137,14 +146,14 @@ export default function Home() {
                   href="/modules/idiq"
                   className="block text-center bg-indigo-700 hover:bg-indigo-600 text-white font-semibold py-3 px-6 rounded-lg transition-colors text-sm"
                 >
-                  Begin Module →
+                  🔒 Begin Sub-Module →
                 </Link>
               </div>
 
-              {/* Module 05 — OTA */}
-              <div className="bg-white/5 border border-white/10 rounded-2xl p-7 flex flex-col hover:bg-white/8 transition-colors group">
+              {/* OTA Sub-Module */}
+              <div className="bg-white/3 border border-white/8 rounded-2xl p-6 flex flex-col hover:bg-white/6 transition-colors group">
                 <div className="flex items-center gap-3 mb-5">
-                  <span className="text-xs font-bold text-cyan-400 uppercase tracking-widest bg-cyan-950 border border-cyan-800 px-2.5 py-1 rounded-full">Module 05</span>
+                  <span className="text-xs font-bold text-cyan-400 uppercase tracking-widest bg-cyan-950 border border-cyan-800 px-2.5 py-1 rounded-full">OTA Sub-Module</span>
                 </div>
                 <h2 className="text-lg font-bold text-white mb-2">Other Transaction Authority</h2>
                 <p className="text-slate-400 text-sm mb-1">20-25 min · Login required for simulation</p>
@@ -159,14 +168,14 @@ export default function Home() {
                   href="/modules/ota"
                   className="block text-center bg-cyan-700 hover:bg-cyan-600 text-white font-semibold py-3 px-6 rounded-lg transition-colors text-sm"
                 >
-                  Begin Module →
+                  🔒 Begin Sub-Module →
                 </Link>
               </div>
 
-              {/* Module 06 — GSA */}
-              <div className="bg-white/5 border border-white/10 rounded-2xl p-7 flex flex-col hover:bg-white/8 transition-colors group">
+              {/* GSA Sub-Module */}
+              <div className="bg-white/3 border border-white/8 rounded-2xl p-6 flex flex-col hover:bg-white/6 transition-colors group">
                 <div className="flex items-center gap-3 mb-5">
-                  <span className="text-xs font-bold text-violet-400 uppercase tracking-widest bg-violet-950 border border-violet-800 px-2.5 py-1 rounded-full">Module 06</span>
+                  <span className="text-xs font-bold text-violet-400 uppercase tracking-widest bg-violet-950 border border-violet-800 px-2.5 py-1 rounded-full">GSA Sub-Module</span>
                 </div>
                 <h2 className="text-lg font-bold text-white mb-2">GSA Schedule (MAS)</h2>
                 <p className="text-slate-400 text-sm mb-1">15-20 min · Login required for simulation</p>
@@ -181,14 +190,14 @@ export default function Home() {
                   href="/modules/gsa"
                   className="block text-center bg-violet-700 hover:bg-violet-600 text-white font-semibold py-3 px-6 rounded-lg transition-colors text-sm"
                 >
-                  Begin Module →
+                  🔒 Begin Sub-Module →
                 </Link>
               </div>
 
-              {/* Module 07 — SBIR */}
-              <div className="bg-white/5 border border-white/10 rounded-2xl p-7 flex flex-col hover:bg-white/8 transition-colors group">
+              {/* SBIR Sub-Module */}
+              <div className="bg-white/3 border border-white/8 rounded-2xl p-6 flex flex-col hover:bg-white/6 transition-colors group">
                 <div className="flex items-center gap-3 mb-5">
-                  <span className="text-xs font-bold text-orange-400 uppercase tracking-widest bg-orange-950 border border-orange-800 px-2.5 py-1 rounded-full">Module 07</span>
+                  <span className="text-xs font-bold text-orange-400 uppercase tracking-widest bg-orange-950 border border-orange-800 px-2.5 py-1 rounded-full">SBIR Sub-Module</span>
                 </div>
                 <h2 className="text-lg font-bold text-white mb-2">SBIR/STTR</h2>
                 <p className="text-slate-400 text-sm mb-1">20-25 min · Login required for simulation</p>
@@ -203,7 +212,7 @@ export default function Home() {
                   href="/modules/sbir"
                   className="block text-center bg-orange-700 hover:bg-orange-600 text-white font-semibold py-3 px-6 rounded-lg transition-colors text-sm"
                 >
-                  Begin Module →
+                  🔒 Begin Sub-Module →
                 </Link>
               </div>
 
