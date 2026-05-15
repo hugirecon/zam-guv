@@ -780,3 +780,349 @@ Passwords are set at creation time by the admin. To reset a password, delete and
 
 **8. Module headers**
 - Confirmed `hidden sm:block` already present on module label text in both Module 01 and Module 02 headers — no change required
+
+---
+
+## User Flow Map
+
+The complete candidate journey from first visit to scored results.
+
+```
+Landing Page (/)
+    │
+    ├─▶ Module 01 — Introduction (/modules/intro)
+    │       No login required. Candidate reads GovCon terminology,
+    │       landscape, contract vehicles, compliance frameworks.
+    │       Tab bar: Overview / Contract Vehicles / Compliance
+    │       On completion → "Mark Complete & Proceed to Module 2"
+    │       Updates: user.currentModule = 2, user.module1Done = true
+    │
+    ├─▶ Module 02 — Training (/modules/training)
+    │       Login required. Guided walkthrough of the full
+    │       Opportunity ID → Bid/No-Bid → Proposal → Submit process.
+    │       "Launch Training Portal" → /login?mode=training
+    │       Login creates a TRAINING session (24h expiry, no timer).
+    │       Candidate uses Zam.guv hands-on with no time pressure.
+    │
+    └─▶ Module 03 — Simulation (/login → /vp/hub → /vp/sim)
+            Login required. Timer starts on login.
+            Login creates an ASSESSMENT session (30-min expiry).
+            ↓
+        VP Hub (/vp/hub)
+            Candidate selects a vehicle (Standard, IDIQ, OTA, GSA, SBIR).
+            POST /api/sessions/select — creates or resumes session for
+            that vehicleType, re-signs JWT with new sessionId.
+            ↓
+        Simulation (/vp/sim)
+            SAM.gov-style UI. Candidate browses contracts filtered
+            to their active vehicleType. Countdown timer visible.
+            Clicks contract → /vp/contracts/[id]
+            ↓
+        Contract Detail (/vp/contracts/[id])
+            Full solicitation view. Proposal editor with 5 fields:
+            Executive Summary, Technical Approach, Management Approach,
+            Pricing Narrative, Past Performance + Proposed Value.
+            Auto-saves on every field change (POST /api/proposals).
+            Manual submit → POST /api/proposals/[id]/submit
+            ↓
+        Timer hits 0
+            Client calls POST /api/sessions/lock
+            All draft proposals → status: "submitted", autoSubmitted: true
+            Session locked: true
+            ⚠️ Known bug: auto-submitted proposals are NOT AI-scored.
+            ↓
+        Manual submit path
+            POST /api/proposals/[id]/submit
+            Marks proposal submitted, calls scoreProposalAsync()
+            AI score stored on proposal record
+            User.currentModule advanced to 4, module3Done: true
+            ↓
+        Results visible in Admin portal
+            Admin sees score, breakdown, feedback per proposal
+```
+
+Sub-module paths (IDIQ / OTA / GSA / SBIR) follow the same flow but branch at the landing page:
+```
+Landing → Sub-Module intro page (/modules/intro/[vehicle])
+       → Sub-Module training page (/modules/training/[vehicle])
+       → Login with ?vehicle=[vehicle] param
+       → Hub → select that vehicle → Sim (filtered to that vehicle's 25 contracts)
+```
+
+---
+
+## AI Scoring System
+
+Every manually submitted proposal is scored synchronously by Claude immediately after submission. Auto-submitted proposals (timer expiry) are currently **not** scored — see Known Bugs.
+
+### Model
+`claude-opus-4-5` via `@anthropic-ai/sdk`  
+Route: `POST /api/proposals/[id]/submit` → `scoreProposalAsync()`
+
+### Input sent to Claude
+- Contract title, description, requirements (parsed from JSON array), NAICS code, value range
+- All 5 proposal fields: Executive Summary, Technical Approach, Management Approach, Pricing Narrative, Past Performance
+- Proposed dollar value
+
+### Scoring dimensions (0–100 each)
+| Dimension | What it measures |
+|---|---|
+| `technical` | Specificity, methodology, alignment to contract requirements |
+| `management` | Key personnel, org structure, risk mitigation, QA |
+| `pricing` | Cost basis, labor categories, BOE justification, market calibration |
+| `past_performance` | Relevance of cited contracts, specificity (contract #s, values, outcomes) |
+| `compliance` | Adherence to solicitation requirements, regulatory awareness |
+
+**`overall`** — top-level 0–100 composite score stored as `proposal.aiScore`
+
+### Output stored on proposal record
+```
+aiScore            INT      — overall 0-100
+aiScoreBreakdown   JSON     — { technical, management, pricing, past_performance, compliance }
+aiFeedback         JSON     — { strengths[], weaknesses[], recommendation, feedback }
+aiScoredAt         DateTime
+```
+
+### Recommendation labels
+Claude returns one of four labels:
+- `Award` — strong, competitive proposal
+- `High Competitive` — above average, good win probability
+- `Competitive` — viable but not standout
+- `Non-Competitive` — insufficient to win
+
+### Grading philosophy (from system prompt)
+> "Be rigorous. Grade based on specificity, relevance to requirements, and win probability."
+
+Vague, generic proposals score low regardless of length. Specific proposals with contract numbers, measurable outcomes, and direct alignment to requirements score high.
+
+### Leaderboard scoring
+`GET /api/leaderboard` computes:
+- `compositeScore` — average of all `aiScore` values across all submitted proposals for that user
+- `bestScore` — highest single `aiScore`
+- `proposalCount` — total submitted proposals
+- `vehiclesCompleted` — count of distinct vehicleTypes with at least one submitted proposal
+
+---
+
+## Admin SOP
+
+Standard procedures for the admin portal at `/admin`.
+
+### Adding a candidate
+
+1. Log in as `admin@zam.guv`
+2. Navigate to **Admin → Users**
+3. Click **Add User**
+4. Enter: Full name, email (`firstname.lastname@kdt.guv`), password (`KDT-Demo2026!` or custom), role: `vp`
+5. Click **Create** — user is immediately active
+
+> Password is bcrypt-hashed at creation. There is no "forgot password" flow. To reset: delete the user and recreate with the same email and a new password. All their sessions and proposals are deleted with the user (cascade).
+
+### Sending credentials to a candidate
+
+Share manually:
+- URL: https://zam-guv.vercel.app
+- Email: their `@kdt.guv` address
+- Password: whatever was set at creation
+- Instructions: start at Module 01, read before touching the sim
+
+### Monitoring an active session
+
+1. **Admin → Sessions** — shows all sessions with: user name, vehicleType, mode, start time, expiry, locked status, proposal count
+2. While a session is active: the `expiresAt` column shows when the timer runs out
+3. There is currently no live "currently active" indicator — refresh the page to see current state
+
+### Reviewing results after a session
+
+1. **Admin → Proposals** — lists all proposals with: candidate name, contract title, status, AI score, submission time
+2. Click a proposal to see full text + score breakdown + strengths/weaknesses/recommendation
+3. **Admin → Sessions** — cross-reference to see which proposals belong to which timed session
+
+### Reading scores
+
+| Score range | Meaning |
+|---|---|
+| 80–100 | Award / High Competitive — strong candidate signal |
+| 60–79 | Competitive — understands the process, some gaps |
+| 40–59 | Basic awareness, significant gaps in execution |
+| 0–39 | Non-Competitive — not ready for GovCon business development |
+
+A candidate who submitted 0 proposals does not appear on the leaderboard. A candidate with all auto-submitted proposals (timer expired) will have unscored proposals — this is a known bug.
+
+---
+
+## Session Mechanics
+
+Understanding how sessions work is critical to understanding the platform.
+
+### Session record fields
+```
+id           CUID
+userId       FK → User
+vehicleType  "Standard" | "IDIQ" | "OTA" | "GSA" | "SBIR"
+mode         "training" | "assessment"
+startedAt    DateTime (creation time)
+expiresAt    DateTime (startedAt + timer duration)
+locked       Boolean (false until timer fires or admin locks)
+lockedAt     DateTime | null
+```
+
+### Session creation
+Sessions are created by `getOrCreateVPSession()` in `lib/auth.ts`.
+
+**On login** (`POST /api/auth/login`):
+- Mode is determined by `user.currentModule`:
+  - `currentModule <= 2` → `training` mode
+  - `currentModule > 2` → `assessment` mode
+- This means: users who haven't completed Module 2 always get training sessions on login, regardless of what button they clicked
+
+**On hub vehicle select** (`POST /api/sessions/select`):
+- Explicit `mode` and `vehicleType` passed from the hub
+- `getOrCreateVPSession()` first looks for an existing non-expired, non-locked session of the same `mode + vehicleType`
+- If found: resumes it (same timer)
+- If not: creates a new one
+
+### Timer durations
+| Mode | Duration | Notes |
+|---|---|---|
+| `training` | 24 hours | Effectively no timer — candidates work at their own pace |
+| `assessment` | 30 minutes | Hard deadline. Client-side countdown. |
+
+### JWT and sessionId
+The JWT cookie (`zam-token`, httpOnly, 8h, SameSite=lax) carries:
+```json
+{ "userId": "...", "role": "vp", "sessionId": "..." }
+```
+Every API call reads the cookie to determine which session is active. This means a candidate can only have one active session per JWT. If they log in again, they get a new JWT but `getOrCreateVPSession()` will resume an existing valid session for that vehicleType+mode combination.
+
+### Session locking (timer expiry)
+When the client-side countdown reaches 0, it calls `POST /api/sessions/lock`:
+1. Finds all `draft` proposals in that session
+2. Updates each to `status: "submitted"`, `autoSubmitted: true`, `submittedAt: now`
+3. Sets `session.locked = true`, `session.lockedAt = now`
+
+⚠️ **Known gap:** `lock` does not call `scoreProposalAsync()`. Auto-submitted proposals have no AI scores.
+
+⚠️ **Known gap:** If the candidate closes the browser before time expires, the lock never fires client-side. The session sits expired-but-unlocked. No server-side cleanup job exists yet.
+
+### Training vs Assessment — key behavioral differences
+
+| Behavior | Training | Assessment |
+|---|---|---|
+| Timer shown | No | Yes (30 min countdown) |
+| Session expiry | 24h | 30 min |
+| Proposals AI-scored | Yes (if manually submitted) | Yes (if manually submitted) |
+| Auto-submit on expiry | No | Yes (client-side) |
+| Advances `currentModule` | No | Yes → module3Done, currentModule=4 |
+
+---
+
+## Module Map
+
+All modules, their routes, content, and auth requirements.
+
+### Core Track
+
+| Module | Route | Login? | Content | Time |
+|---|---|---|---|---|
+| Module 01 — Introduction | `/modules/intro` | No | GovCon terminology, landscape, contract vehicles, compliance frameworks. Three tabs: Overview (pipeline-organized), Contract Vehicles, Compliance. | 20–25 min read |
+| Module 02 — Training | `/modules/training` | Yes (training session) | Full process walkthrough: Opportunity ID → Bid/No-Bid → Proposal → Submit. Links to live training sim. | 30–45 min guided |
+| Module 03 — Simulation | `/vp/sim` (via hub) | Yes (assessment session) | Live SAM.gov-style sim. 52 Standard contracts. 30-min timer. Every action recorded. AI-scored proposals. | 30 min timed |
+
+### Sub-Modules
+
+| Sub-Module | Intro Route | Training Route | Sim Vehicle | Contracts |
+|---|---|---|---|---|
+| IDIQ | `/modules/intro/idiq` | `/modules/training/idiq` | `IDIQ` | 25 task orders |
+| OTA | `/modules/intro/ota` | `/modules/training/ota` | `OTA` | 25 prototype opportunities |
+| GSA | `/modules/intro/gsa` | `/modules/training/gsa` | `GSA` | 25 MAS task orders |
+| SBIR | `/modules/intro/sbir` | `/modules/training/sbir` | `SBIR` | 25 R&D solicitations |
+
+Sub-modules use the same sim UI (`/vp/sim`) — the active vehicleType on the session determines which contract pool is shown.
+
+### Progress tracking
+`User.currentModule` tracks where the candidate is:
+| Value | Meaning |
+|---|---|
+| 1 | Not started / reading Module 01 |
+| 2 | Module 01 complete, on Module 02 |
+| 3 | Module 02 complete, ready for assessment |
+| 4 | Assessment complete (module3Done = true) |
+
+---
+
+## Local Development Setup
+
+### Prerequisites
+- Node.js 18+
+- A Neon account (or use local SQLite for dev — `dev.db` is already set up)
+
+### Steps
+
+```bash
+# 1. Clone
+git clone https://github.com/hugirecon/zam-guv.git
+cd zam-guv
+
+# 2. Install
+npm install
+
+# 3. Environment
+# For local dev, .env already points to SQLite (file:./dev.db)
+# Copy and fill in for production:
+cp .env .env.local
+# Set: DATABASE_URL, JWT_SECRET, ANTHROPIC_API_KEY
+
+# 4. Migrate + seed (local SQLite)
+npx prisma migrate dev --name init
+npx ts-node --compiler-options '{"module":"CommonJS"}' prisma/seed.ts
+npx ts-node --compiler-options '{"module":"CommonJS"}' prisma/seed-vehicles.ts
+
+# 5. Run
+npm run dev
+# → http://localhost:3000
+```
+
+### Environment variables
+
+| Variable | Required | Description |
+|---|---|---|
+| `DATABASE_URL` | Yes | Neon connection string (or `file:./dev.db` for local) |
+| `JWT_SECRET` | Yes | Random secret for JWT signing. Any string works for dev. |
+| `ANTHROPIC_API_KEY` | Yes for scoring | Claude API key. Without it, proposals submit but are not scored. |
+
+### Local vs Production database
+- **Local dev:** uses SQLite (`dev.db`) — fast, no setup, does not require Neon
+- **Production (Vercel):** uses Neon Serverless Postgres via `.env.production.local`
+- Never commit `.env.production.local` — it contains live DB credentials
+
+### Prisma commands
+```bash
+npx prisma studio        # visual DB browser at localhost:5555
+npx prisma migrate dev   # apply schema changes
+npx prisma generate      # regenerate client after schema changes
+```
+
+---
+
+## Design Decisions
+
+Rationale for key technical choices, for future reference.
+
+### JWT over NextAuth / sessions
+NextAuth adds complexity (adapters, providers, callbacks) that wasn't needed for a simple email+password internal tool. JWT stored in an httpOnly cookie achieves the same security posture with less code. The `sessionId` embedded in the JWT is the key innovation — it ties every API call to a specific timed assessment session without a separate session lookup table query on every request.
+
+### Neon Serverless Postgres over PlanetScale / Supabase / SQLite
+Neon integrates directly with Vercel Marketplace — one-click, zero configuration, auto-scales to zero when idle (free tier). The Prisma adapter (`@prisma/adapter-neon`) handles the serverless connection pooling that traditional Postgres drivers can't do in serverless edge environments.
+
+### claude-opus-4-5 for scoring
+Chosen for scoring quality. Proposal evaluation requires nuanced judgment about specificity, GovCon domain knowledge, and win probability — tasks where stronger models produce meaningfully better discrimination between good and poor proposals. **This model name should be reviewed periodically** — newer Claude versions may offer equal quality at lower cost. See Known Bugs for the open issue on this.
+
+### SAM.gov-style UI for the simulation
+The sim deliberately mimics SAM.gov's actual visual design (blue sidebar, accordion filters, government typography). This is intentional: it reduces the learning curve for candidates who have used SAM.gov, and it tests whether candidates can navigate a realistic government portal under time pressure — not just whether they can answer GovCon trivia.
+
+### One proposal per contract per user (upsert)
+The proposal table uses a unique constraint on `(contractId, userId)`. Candidates can edit and resubmit the same proposal without creating duplicate records. This simplifies scoring (no need to pick "the latest" version) and admin review (one row per contract per candidate).
+
+### `currentModule` as training/assessment gate
+The login route determines session mode from `user.currentModule` rather than a URL parameter. This prevents candidates from bypassing the training sequence by directly hitting the assessment login URL. A candidate must have `currentModule > 2` (i.e., explicitly completed or skipped Module 02) before they get an assessment session.
