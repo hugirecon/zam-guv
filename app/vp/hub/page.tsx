@@ -129,6 +129,7 @@ export default function VPHub() {
   const [loading, setLoading] = useState(true);
   const [entering, setEntering] = useState<string | null>(null);
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   useEffect(() => {
     Promise.all([
@@ -185,7 +186,7 @@ export default function VPHub() {
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-950 to-slate-900">
       {/* Header */}
       <header className="border-b border-slate-700/50 backdrop-blur-sm bg-slate-900/50 sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-4">
             <Link href="/" className="flex items-center gap-2 group">
               <span className="text-2xl font-black tracking-tight text-white group-hover:text-blue-300 transition-colors">
@@ -193,10 +194,12 @@ export default function VPHub() {
                 <sup className="text-xs text-red-500 font-bold">®</sup>
               </span>
             </Link>
-            <span className="text-slate-500">|</span>
-            <span className="text-slate-400 text-sm font-medium">Simulation Hub</span>
+            <span className="hidden sm:inline text-slate-500">|</span>
+            <span className="hidden sm:inline text-slate-400 text-sm font-medium">Simulation Hub</span>
           </div>
-          <div className="flex items-center gap-4">
+
+          {/* Desktop nav */}
+          <div className="hidden sm:flex items-center gap-4">
             <Link href="/" className="text-slate-400 hover:text-slate-200 text-sm transition-colors">
               ← Main Site
             </Link>
@@ -208,7 +211,43 @@ export default function VPHub() {
               Logout
             </button>
           </div>
+
+          {/* Mobile: hamburger */}
+          <div className="flex sm:hidden items-center gap-3">
+            <span className="text-slate-400 text-sm">{user.name.split(" ")[0]}</span>
+            <button
+              onClick={() => setMobileMenuOpen((v) => !v)}
+              className="text-slate-300 hover:text-white p-1.5 rounded transition-colors"
+              aria-label="Menu"
+            >
+              {mobileMenuOpen ? (
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              ) : (
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                </svg>
+              )}
+            </button>
+          </div>
         </div>
+
+        {/* Mobile dropdown menu */}
+        {mobileMenuOpen && (
+          <div className="sm:hidden border-t border-slate-700/50 bg-slate-900/95 px-4 py-3 flex flex-col gap-3">
+            <div className="text-slate-400 text-sm">{user.name}</div>
+            <Link href="/" className="text-slate-300 hover:text-white text-sm" onClick={() => setMobileMenuOpen(false)}>
+              ← Main Site
+            </Link>
+            <button
+              onClick={handleLogout}
+              className="text-left text-sm text-red-400 hover:text-red-300"
+            >
+              Logout
+            </button>
+          </div>
+        )}
       </header>
 
       {/* Hero */}
@@ -259,14 +298,19 @@ export default function VPHub() {
           </div>
         ) : (
           <div className="bg-slate-800/40 border border-slate-700 rounded-2xl overflow-hidden">
-            {/* Header */}
-            <div className="grid grid-cols-12 gap-4 px-6 py-3 border-b border-slate-700 bg-slate-900/50">
+            {/* Desktop header */}
+            <div className="hidden sm:grid grid-cols-12 gap-4 px-6 py-3 border-b border-slate-700 bg-slate-900/50">
               <div className="col-span-1 text-xs font-bold text-slate-500 uppercase tracking-wider">#</div>
-              <div className="col-span-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Name</div>
+              <div className="col-span-5 text-xs font-bold text-slate-500 uppercase tracking-wider">Name</div>
               <div className="col-span-2 text-xs font-bold text-slate-500 uppercase tracking-wider text-right">Score</div>
-              <div className="col-span-2 text-xs font-bold text-slate-500 uppercase tracking-wider text-right">Best</div>
-              <div className="col-span-2 text-xs font-bold text-slate-500 uppercase tracking-wider text-right">Proposals</div>
-              <div className="col-span-1 text-xs font-bold text-slate-500 uppercase tracking-wider text-right">Vehicles</div>
+              <div className="col-span-2 text-xs font-bold text-slate-500 uppercase tracking-wider text-right">Props</div>
+              <div className="col-span-2 text-xs font-bold text-slate-500 uppercase tracking-wider text-right">Vehicles</div>
+            </div>
+            {/* Mobile header */}
+            <div className="sm:hidden grid grid-cols-12 gap-2 px-4 py-3 border-b border-slate-700 bg-slate-900/50">
+              <div className="col-span-2 text-xs font-bold text-slate-500 uppercase tracking-wider">#</div>
+              <div className="col-span-6 text-xs font-bold text-slate-500 uppercase tracking-wider">Name</div>
+              <div className="col-span-4 text-xs font-bold text-slate-500 uppercase tracking-wider text-right">Score</div>
             </div>
 
             {leaderboard.map((entry, i) => {
@@ -278,61 +322,42 @@ export default function VPHub() {
                 : "";
 
               return (
-                <div
-                  key={entry.userId}
-                  className={`grid grid-cols-12 gap-4 px-6 py-4 items-center border-b border-slate-700/50 last:border-0 transition-colors ${rowBg}`}
-                >
-                  {/* Rank */}
-                  <div className="col-span-1">
-                    {rankMedal ? (
-                      <span className="text-lg leading-none">{rankMedal}</span>
-                    ) : (
-                      <span className="text-slate-500 font-mono text-sm">{entry.rank ?? "—"}</span>
-                    )}
+                <div key={entry.userId}>
+                  {/* Desktop row */}
+                  <div className={`hidden sm:grid grid-cols-12 gap-4 px-6 py-4 items-center border-b border-slate-700/50 last:border-0 ${rowBg}`}>
+                    <div className="col-span-1">
+                      {rankMedal ? <span className="text-lg leading-none">{rankMedal}</span> : <span className="text-slate-500 font-mono text-sm">{entry.rank ?? "—"}</span>}
+                    </div>
+                    <div className="col-span-5 flex items-center gap-2">
+                      <span className={`text-sm font-semibold ${entry.isCurrentUser ? "text-amber-300" : "text-slate-200"}`}>{entry.name}</span>
+                      {entry.isCurrentUser && <span className="text-xs font-bold bg-amber-500/20 text-amber-400 border border-amber-500/40 px-1.5 py-0.5 rounded-full">You</span>}
+                    </div>
+                    <div className="col-span-2 text-right">
+                      {entry.compositeScore !== null ? (
+                        <span className={`text-sm font-bold ${
+                          entry.compositeScore >= 80 ? "text-emerald-400" : entry.compositeScore >= 60 ? "text-blue-400" : entry.compositeScore >= 40 ? "text-amber-400" : "text-red-400"
+                        }`}>{entry.compositeScore}</span>
+                      ) : <span className="text-slate-600 text-sm">—</span>}
+                    </div>
+                    <div className="col-span-2 text-right"><span className="text-slate-400 text-sm">{entry.proposalCount}</span></div>
+                    <div className="col-span-2 text-right"><span className="text-slate-400 text-sm">{entry.vehiclesCompleted}</span></div>
                   </div>
-
-                  {/* Name */}
-                  <div className="col-span-4 flex items-center gap-2">
-                    <span className={`text-sm font-semibold ${
-                      entry.isCurrentUser ? "text-amber-300" : "text-slate-200"
-                    }`}>
-                      {entry.name}
-                    </span>
-                    {entry.isCurrentUser && (
-                      <span className="text-xs font-bold bg-amber-500/20 text-amber-400 border border-amber-500/40 px-1.5 py-0.5 rounded-full">You</span>
-                    )}
-                  </div>
-
-                  {/* Composite Score */}
-                  <div className="col-span-2 text-right">
-                    {entry.compositeScore !== null ? (
-                      <span className={`text-sm font-bold ${
-                        entry.compositeScore >= 80 ? "text-emerald-400" :
-                        entry.compositeScore >= 60 ? "text-blue-400" :
-                        entry.compositeScore >= 40 ? "text-amber-400" : "text-red-400"
-                      }`}>
-                        {entry.compositeScore}
-                      </span>
-                    ) : (
-                      <span className="text-slate-600 text-sm">—</span>
-                    )}
-                  </div>
-
-                  {/* Best Score */}
-                  <div className="col-span-2 text-right">
-                    <span className="text-slate-400 text-sm">
-                      {entry.bestScore !== null ? entry.bestScore : "—"}
-                    </span>
-                  </div>
-
-                  {/* Proposal Count */}
-                  <div className="col-span-2 text-right">
-                    <span className="text-slate-400 text-sm">{entry.proposalCount}</span>
-                  </div>
-
-                  {/* Vehicles */}
-                  <div className="col-span-1 text-right">
-                    <span className="text-slate-400 text-sm">{entry.vehiclesCompleted}</span>
+                  {/* Mobile row */}
+                  <div className={`sm:hidden grid grid-cols-12 gap-2 px-4 py-3 items-center border-b border-slate-700/50 last:border-0 ${rowBg}`}>
+                    <div className="col-span-2">
+                      {rankMedal ? <span className="text-base leading-none">{rankMedal}</span> : <span className="text-slate-500 font-mono text-sm">{entry.rank ?? "—"}</span>}
+                    </div>
+                    <div className="col-span-6 flex items-center gap-1.5 min-w-0">
+                      <span className={`text-sm font-semibold truncate ${entry.isCurrentUser ? "text-amber-300" : "text-slate-200"}`}>{entry.name.split(" ")[0]}</span>
+                      {entry.isCurrentUser && <span className="text-xs font-bold bg-amber-500/20 text-amber-400 border border-amber-500/40 px-1 py-0.5 rounded-full flex-shrink-0">You</span>}
+                    </div>
+                    <div className="col-span-4 text-right">
+                      {entry.compositeScore !== null ? (
+                        <span className={`text-sm font-bold ${
+                          entry.compositeScore >= 80 ? "text-emerald-400" : entry.compositeScore >= 60 ? "text-blue-400" : entry.compositeScore >= 40 ? "text-amber-400" : "text-red-400"
+                        }`}>{entry.compositeScore}</span>
+                      ) : <span className="text-slate-600 text-sm">—</span>}
+                    </div>
                   </div>
                 </div>
               );

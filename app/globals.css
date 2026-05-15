@@ -13,6 +13,51 @@
   }
 }
 
+/* ── Mobile: sim page filter sidebar drawer ── */
+@media (max-width: 767px) {
+  .filter-sidebar {
+    display: none;
+  }
+  .filter-sidebar.drawer-open {
+    display: block !important;
+    position: fixed !important;
+    top: 0;
+    left: 0;
+    width: min(300px, 88vw) !important;
+    min-width: unset !important;
+    height: 100dvh;
+    z-index: 200;
+    overflow-y: auto;
+  }
+  .filter-sidebar-overlay {
+    display: block;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.45);
+    z-index: 199;
+  }
+  .filter-mobile-btn {
+    display: flex !important;
+  }
+  .filter-sidebar-close {
+    display: flex !important;
+  }
+  /* contract card meta: 2 cols on mobile */
+  .contract-meta {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px 8px;
+  }
+  .contract-meta-pob {
+    grid-column: 1 / -1;
+  }
+}
+@media (min-width: 768px) {
+  .filter-mobile-btn { display: none !important; }
+  .filter-sidebar-close { display: none !important; }
+  .filter-sidebar-overlay { display: none !important; }
+}
+
 @layer utilities {
   .line-clamp-2 {
     display: -webkit-box;

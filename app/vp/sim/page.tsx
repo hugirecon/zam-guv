@@ -81,6 +81,7 @@ export default function VPSim() {
   const [statusInactive, setStatusInactive] = useState(false);
   const [myProposals, setMyProposals] = useState<Set<string>>(new Set());
   const [pendingSearch, setPendingSearch] = useState("");
+  const [filterDrawerOpen, setFilterDrawerOpen] = useState(false);
 
   useEffect(() => {
     fetch("/api/auth/me")
@@ -138,19 +139,52 @@ export default function VPSim() {
     <>
       {/* Back to Hub breadcrumb */}
       <div style={{ background: "#f0f0f0", borderBottom: "1px solid #dfe1e2", padding: "6px 16px" }}>
-        <div style={{ maxWidth: "1400px", margin: "0 auto" }}>
+        <div style={{ maxWidth: "1400px", margin: "0 auto", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
           <Link
             href="/vp/hub"
             style={{ fontSize: "13px", color: "#005ea2", textDecoration: "none", display: "inline-flex", alignItems: "center", gap: "4px" }}
           >
             ← Back to Hub
           </Link>
+          {/* Mobile filter button */}
+          <button
+            className="filter-mobile-btn"
+            onClick={() => setFilterDrawerOpen(true)}
+            style={{
+              display: "none", /* overridden by CSS on mobile */
+              alignItems: "center",
+              gap: "6px",
+              background: "#005ea2",
+              color: "#fff",
+              border: "none",
+              borderRadius: "4px",
+              padding: "5px 12px",
+              fontSize: "13px",
+              fontWeight: "700",
+              cursor: "pointer",
+            }}
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+              <line x1="3" y1="6" x2="21" y2="6" />
+              <line x1="3" y1="12" x2="21" y2="12" />
+              <line x1="3" y1="18" x2="21" y2="18" />
+            </svg>
+            Filters{hasFilters ? " •" : ""}
+          </button>
         </div>
       </div>
 
+      {/* Mobile drawer overlay */}
+      {filterDrawerOpen && (
+        <div
+          className="filter-sidebar-overlay"
+          onClick={() => setFilterDrawerOpen(false)}
+        />
+      )}
+
       <div style={{ display: "flex", gap: "0", marginTop: "0", alignItems: "flex-start" }}>
         {/* LEFT SIDEBAR — Filters */}
-        <aside style={{
+        <aside className={`filter-sidebar${filterDrawerOpen ? " drawer-open" : ""}`} style={{
           width: "250px",
           minWidth: "250px",
           background: "#e8f1f9",
@@ -170,7 +204,14 @@ export default function VPSim() {
             fontWeight: "700",
           }}>
             <span>Filter By</span>
-            <span style={{ cursor: "pointer", fontSize: "16px" }}>–</span>
+            {/* Close button — mobile only */}
+            <button
+              className="filter-sidebar-close"
+              onClick={() => setFilterDrawerOpen(false)}
+              style={{ display: "none", background: "none", border: "none", color: "#fff", fontSize: "20px", cursor: "pointer", lineHeight: 1, padding: "0 2px" }}
+              aria-label="Close filters"
+            >×</button>
+            <span className="hidden md:inline" style={{ cursor: "pointer", fontSize: "16px" }}>–</span>
           </div>
 
           {/* Keyword Search */}
@@ -483,25 +524,25 @@ function ContractCard({
 
       <p style={{ fontSize: "13px", color: "#1b1b1b", margin: "0 0 8px" }}>{c.agency}</p>
 
-      <div style={{ display: "flex", flexWrap: "wrap", gap: "16px", fontSize: "13px", color: "#565c65" }}>
+      <div className="contract-meta" style={{ display: "flex", flexWrap: "wrap", gap: "16px", fontSize: "13px", color: "#565c65" }}>
         <span>
-          <strong style={{ color: "#1b1b1b" }}>Solicitation #:</strong> {c.solicNumber}
+          <strong style={{ color: "#1b1b1b" }}>Sol #:</strong> {c.solicNumber}
         </span>
         <span>
           <strong style={{ color: "#1b1b1b" }}>NAICS:</strong> {c.naicsCode}
         </span>
         <span>
-          <strong style={{ color: "#1b1b1b" }}>Response Deadline:</strong> {dueDate}
+          <strong style={{ color: "#1b1b1b" }}>Deadline:</strong> {dueDate}
         </span>
         {(c.valueMin > 0 || c.valueMax > 0) && (
           <span>
-            <strong style={{ color: "#1b1b1b" }}>Contract Value:</strong> {formatValue(c.valueMin, c.valueMax)}
+            <strong style={{ color: "#1b1b1b" }}>Value:</strong> {formatValue(c.valueMin, c.valueMax)}
           </span>
         )}
       </div>
 
       {c.pob && (
-        <div style={{ marginTop: "6px", fontSize: "13px", color: "#565c65" }}>
+        <div className="contract-meta-pob" style={{ marginTop: "6px", fontSize: "13px", color: "#565c65" }}>
           <strong style={{ color: "#1b1b1b" }}>Place of Performance:</strong> {c.pob}
         </div>
       )}

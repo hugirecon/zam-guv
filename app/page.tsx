@@ -19,7 +19,7 @@ export default function Home() {
       </header>
 
       {/* Hero */}
-      <main className="flex-1 flex flex-col items-center px-6 py-16">
+      <main className="flex-1 flex flex-col items-center px-4 sm:px-6 py-10 sm:py-16">
         <div className="max-w-6xl w-full">
           <div className="text-center mb-14">
             <p className="text-blue-400 text-sm uppercase tracking-widest font-semibold mb-3">Knight Division Tactical</p>

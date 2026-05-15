@@ -109,7 +109,7 @@ Back to Home
         </div>
 
         {/* Card */}
-        <div className="bg-white rounded-2xl shadow-2xl p-8">
+        <div className="bg-white rounded-2xl shadow-2xl p-6 sm:p-8">
           <div className="mb-6">
             <h2 className="text-xl font-bold text-gray-900">Sign in</h2>
             {isReady ? (

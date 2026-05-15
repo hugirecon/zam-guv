@@ -107,7 +107,7 @@ export default function IntroPage() {
 
         {/* TAB BAR */}
         <div className="mb-10">
-          <div className="inline-flex bg-gray-100 rounded-xl p-1 gap-1">
+          <div className="flex bg-gray-100 rounded-xl p-1 gap-1 w-full sm:w-auto sm:inline-flex overflow-x-auto">
             {([
               { id: "all" as Tab, label: "Overview", icon: "📅" },
               { id: "vehicles" as Tab, label: "Contract Vehicles", icon: "🚗" },
@@ -116,7 +116,7 @@ export default function IntroPage() {
               <button
                 key={id}
                 onClick={() => setActiveTab(id)}
-                className={`px-4 py-2.5 rounded-lg text-sm font-semibold transition-all ${
+                className={`flex-1 sm:flex-none px-3 sm:px-4 py-2.5 rounded-lg text-sm font-semibold transition-all text-center ${
                   activeTab === id
                     ? "bg-white text-gray-900 shadow-sm"
                     : "text-gray-500 hover:text-gray-700"
@@ -143,7 +143,10 @@ export default function IntroPage() {
         {activeTab === "all" && <>
 
         {/* PIPELINE STAGE STRIP */}
-        <div className="mb-10 overflow-x-auto -mx-1 px-1">
+        <div className="mb-10 relative">
+          {/* fade indicator on right edge — mobile scroll hint */}
+          <div className="pointer-events-none absolute right-0 top-0 bottom-5 w-10 bg-gradient-to-l from-slate-50 to-transparent z-10 sm:hidden" />
+        <div className="overflow-x-auto -mx-1 px-1">
           <div className="flex gap-2 min-w-max pb-1">
             {([
               { id: "nat-market",   num: "1", label: "The Market",       sub: "Landscape & agencies",           color: "bg-slate-700 hover:bg-slate-600" },
@@ -170,6 +173,7 @@ export default function IntroPage() {
             ))}
           </div>
           <p className="text-xs text-gray-400 mt-2 ml-0.5">Pipeline stages — click to jump to any section.</p>
+        </div>
         </div>
 
         {/* WELCOME */}
