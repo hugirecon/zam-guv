@@ -710,3 +710,73 @@ VP test users are **not seeded** — they are created via Admin → Users. The s
 | Matthew McCalla | matthew.mccalla@kdt.guv | vp | Active |
 
 Passwords are set at creation time by the admin. To reset a password, delete and recreate the user via Admin → Users.
+
+---
+
+## Changelog
+
+### 2026-05-15 — UI/UX Audit Fixes + Mobile Optimization
+
+#### UI/UX Audit Fixes (10 items)
+
+**Landing page — Terminology**
+- Subtitle corrected from "Seven-module assessment system: core GovCon track plus four vehicle-specific deep-dive simulations" → "3-module GovCon assessment system plus 4 vehicle-specific sub-module simulations"
+- Section heading changed from "Vehicle-Specific Tracks" → "Sub-Modules"
+- All four sub-module cards rebadged from "Module 04–07" → "IDIQ Sub-Module", "OTA Sub-Module", "GSA Sub-Module", "SBIR Sub-Module"
+- All four sub-module CTA buttons changed from "Begin Module →" → "🔒 Begin Sub-Module →"
+
+**Landing page — Visual Hierarchy**
+- Sub-module cards visually de-emphasized from core module cards: lighter background (`bg-white/3`), lighter border (`border-white/8`), reduced padding (`p-6`)
+- Border separator added between Core Track and Sub-Modules sections
+- Login gate indicators added to all cards: 🔓 "No login required" on Module 01; 🔒 "Login required" on Modules 02 and 03; 🔒 on all sub-module CTA buttons
+- Module 03 card now shows "Login required · Timer starts immediately"
+
+**Login page**
+- "Back to Modules" link changed to "Back to Home" (it links to `/`, not a modules list)
+- Email placeholder changed from `you@agency.gov` → `firstname.lastname@kdt.guv`
+- Password visibility toggle added (show/hide eye icon button inside the password field)
+
+**Module 01 — Intro page**
+- "All" tab label changed to "Overview" for clarity on first visit
+
+---
+
+#### Mobile Optimization (8 items)
+
+**1. Sim page — Filter sidebar drawer**
+- On mobile (< 768px), the fixed-width 250px sidebar is hidden by default
+- A "☰ Filters" button appears in the breadcrumb bar on mobile; tapping it opens the sidebar as a slide-in drawer (fullscreen overlay, `min(300px, 88vw)` wide, fixed position, z-index 200)
+- A semi-transparent backdrop overlay closes the drawer on tap
+- A ✕ close button added inside the sidebar header (mobile only)
+- CSS classes `.filter-sidebar`, `.filter-sidebar.drawer-open`, `.filter-mobile-btn`, `.filter-sidebar-close`, `.filter-sidebar-overlay` added to `globals.css`
+- Desktop behavior unchanged
+
+**2. Hub leaderboard**
+- On mobile: collapses to 3 columns (Rank / First Name / Score)
+- On desktop: full 5-column layout (Rank / Name / Score / Proposals / Vehicles)
+- Implemented via separate `sm:hidden` and `hidden sm:grid` row variants per entry
+
+**3. Hub header navigation**
+- On mobile: shows logo + user first name + hamburger icon (☰/✕ toggle)
+- Tapping hamburger opens a dropdown with full name, ← Main Site link, and Logout
+- "|" divider and "Simulation Hub" label hidden on mobile (`hidden sm:inline`)
+- Desktop nav unchanged
+
+**4. Contract card metadata (sim page)**
+- Metadata row (Sol #, NAICS, Deadline, Value, PoP) switches from `flex-wrap` to a 2-column CSS grid on mobile via `.contract-meta` class
+- Place of Performance spans full width on mobile via `.contract-meta-pob`
+- Labels shortened on mobile (e.g., "Solicitation #:" → "Sol #:", "Response Deadline:" → "Deadline:")
+
+**5. Landing page pipeline strip (Module 01 — Overview tab)**
+- Right-edge fade gradient overlay added on mobile to indicate horizontal scroll
+- Implemented as a `pointer-events-none` `bg-gradient-to-l from-slate-50` div, `sm:hidden`
+
+**6. Login card padding**
+- Changed from `p-8` to `p-6 sm:p-8` to prevent tightness on narrow screens
+
+**7. Module 01 — Intro tab bar**
+- Tabs stretch to full-width on mobile (`flex w-full`), each tab takes equal space (`flex-1`)
+- On `sm+` reverts to `inline-flex w-auto` (auto-width)
+
+**8. Module headers**
+- Confirmed `hidden sm:block` already present on module label text in both Module 01 and Module 02 headers — no change required
