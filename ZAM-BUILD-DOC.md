@@ -1,6 +1,6 @@
 # Zam.guv — Build Document & Features Reference
 
-**Version:** 2.1  
+**Version:** 3.0  
 **Updated:** 2026-05-16  
 **Live:** https://zam-guv.vercel.app  
 **Repo:** https://github.com/hugirecon/zam-guv  
@@ -41,6 +41,7 @@ The platform has seven modules, each tied to a specific government contracting v
 | ORM | Prisma with `@prisma/adapter-neon` |
 | Auth | JWT via `jsonwebtoken`, bcrypt passwords |
 | AI Scoring | Anthropic Claude — model: `claude-opus-4-5` (`@anthropic-ai/sdk`) |
+| PDF Generation | `@react-pdf/renderer` (Node.js runtime, server-side) |
 | Hosting | Vercel (auto-deploy from `main` branch) |
 | Styling | Tailwind CSS |
 
@@ -53,7 +54,7 @@ The platform has seven modules, each tied to a specific government contracting v
 
 ## Database Schema
 
-Four models. All platform data flows through them.
+Seven models as of v3.0.
 
 ### User
 ```
@@ -71,6 +72,11 @@ module3Done    Boolean (default: false)
 `currentModule` drives session mode on login:
 - `<= 2` → training mode (24-hour session, no timer pressure)
 - `> 2` → assessment mode (30-minute countdown session)
+
+**Added in v3.0:**
+```
+cohortId  String? (FK → Cohort, optional) — cohort assignment for grouped leaderboards
+```
 
 ### Contract
 ```
@@ -98,15 +104,17 @@ status         String — "active" | "closed" | "awarded"
 
 ### Session
 ```
-id          CUID (primary key)
-userId      String (FK → User)
-token       String (unique)
-startedAt   DateTime
-expiresAt   DateTime — startedAt + 30min (assessment) or +24h (training)
-locked      Boolean (default: false) — true when session has ended
-lockedAt    DateTime?
-mode        String — "assessment" | "training"
-vehicleType String — "Standard" | "IDIQ" | "OTA" | "GSA" | "SBIR"
+id             CUID (primary key)
+userId         String (FK → User)
+token          String (unique)
+startedAt      DateTime
+expiresAt      DateTime — startedAt + 30min (assessment) or +24h (training)
+locked         Boolean (default: false) — true when session has ended
+lockedAt       DateTime?
+mode           String — "assessment" | "training"
+vehicleType    String — "Standard" | "IDIQ" | "OTA" | "GSA" | "SBIR"
+loginToken     String? — UUID generated at login; ties session to a specific login event (v3.0)
+tabSwitchCount Int (default: 0) — denormalized tab-switch event count (v3.0)
 ```
 
 One active session per vehicle per mode at a time. A new session is only created when the existing one for that vehicle/mode is expired or locked.
@@ -126,15 +134,51 @@ proposedValue      Float
 status             "draft" | "submitted"
 submittedAt        DateTime?
 autoSubmitted      Boolean — true if force-submitted when session expired
-aiScore            Float? — 0–100 composite score
-aiScoreBreakdown   String? — JSON: { technical, management, pricing, past_performance, compliance }
-aiFeedback         String? — JSON: { strengths[], weaknesses[], recommendation, feedback }
-aiScoredAt         DateTime?
-createdAt          DateTime
-updatedAt          DateTime
+aiScore              Float?    — 0–100 composite score
+aiScoreBreakdown     String?   — JSON: { technical, management, pricing, past_performance, compliance }
+aiFeedback           String?   — JSON: { strengths[], weaknesses[], recommendation, feedback }
+aiScoredAt           DateTime?
+aiInterviewQuestions String?   — JSON array of 3–5 interview questions generated after scoring (v3.0)
+adminScore           Float?    — admin override score; shown in place of aiScore when set (v3.0)
+adminNotes           String?   — admin commentary on the override (v3.0)
+adminScoredAt        DateTime? (v3.0)
+createdAt            DateTime
+updatedAt            DateTime
 ```
 
 **Unique constraint:** `(contractId, userId)` — one proposal per contract per VP, ever.
+
+### ContractView *(added v3.0)*
+```
+id          CUID (primary key)
+userId      String (FK → User)
+contractId  String (FK → Contract)
+sessionId   String (FK → Session)
+viewedAt    DateTime (default: now)
+timeSpentMs Int? — milliseconds on the contract page before navigating away
+```
+
+**Unique constraint:** `(contractId, userId, sessionId)`. Upserted when a VP opens a contract. Time spent updated via `PATCH /api/contracts/[id]/view`.
+
+### Cohort *(added v3.0)*
+```
+id          CUID (primary key)
+name        String
+description String?
+createdAt   DateTime (default: now)
+```
+
+Admin creates cohorts and assigns VPs to them. One cohort per user. Drives cohort-scoped leaderboard.
+
+### TabSwitchEvent *(added v3.0)*
+```
+id         CUID (primary key)
+userId     String (FK → User)
+sessionId  String (FK → Session)
+occurredAt DateTime (default: now)
+```
+
+One record per event. `Session.tabSwitchCount` is incremented on each insert for fast admin display.
 
 ---
 
@@ -152,17 +196,18 @@ Cookie config:
 - `sameSite: "lax"`
 - Cookie name: `zam-token`
 
-**Login flow:**
+**Login flow (v3.0):**
 1. Verify email + bcrypt password match
-2. Determine mode: `currentModule <= 2` → training (24h session), else → assessment (30-min session)
-3. Call `getOrCreateVPSession(userId, trainingMode, vehicleType)` — reuses active session if one exists for that vehicle/mode
-4. Sign JWT with `{ userId, role, sessionId }`
-5. Set `zam-token` cookie, return user data
-6. Redirect: VP → `/vp/hub`, Admin → `/admin`
+2. Generate `loginToken = crypto.randomUUID()`
+3. Determine mode: `currentModule <= 2` → training (24h session), else → assessment (30-min session)
+4. Call `getOrCreateVPSession(userId, trainingMode, vehicleType, loginToken)` — reuses active session or creates new one with loginToken stored
+5. Sign JWT with `{ userId, role, sessionId, loginToken }`
+6. Set `zam-token` cookie, return user data
+7. Redirect: VP → `/vp/hub`, Admin → `/admin`
 
 **Per-request auth:**
 ```typescript
-getAuthUser() → reads "zam-token" cookie → verifies JWT → returns { id, name, email, role, sessionId }
+getAuthUser() → reads "zam-token" cookie → verifies JWT → returns { id, name, email, role, sessionId, loginToken }
 ```
 
 ---
@@ -714,6 +759,27 @@ Passwords are set at creation time by the admin. To reset a password, delete and
 
 ## Changelog
 
+### 2026-05-16 — Admin Features Sprint (v3.0)
+
+8 new features built and pushed to main (commit `0d14152`). 2,700 lines added across 29 files.
+
+**New models:** `ContractView`, `Cohort`, `TabSwitchEvent`  
+**New fields:** `Session.loginToken`, `Session.tabSwitchCount`, `Proposal.aiInterviewQuestions`, `Proposal.adminScore/Notes/ScoredAt`, `User.cohortId`  
+**New package:** `@react-pdf/renderer`
+
+| Feature | What was built |
+|---|---|
+| Behavioral analytics | `ContractView` tracking; `/admin/candidates/[userId]` with views, bid rate, timing, tab switches |
+| Admin proposal viewer | `/admin/proposals/[id]` with full text, dimension scores, feedback, interview questions |
+| Score override | `PATCH /api/admin/proposals/[id]/score`; ✎ indicator on leaderboard when overridden |
+| Cohort grouping | `/admin/cohorts`, cohort leaderboard, VP hub "My Cohort" toggle |
+| Candidate PDF report | `GET /api/admin/candidates/[userId]/report` via `@react-pdf/renderer`; auto-scales |
+| Attempt limiting | `loginToken` in JWT + Session; one assessment per vehicle per login; training exempt |
+| Tab-switch detection | `TabSwitchMonitor.tsx` + `sendBeacon`; `TabSwitchEvent` records; admin warning at >2 |
+| AI interview questions | Second Claude call after scoring; stored in `Proposal.aiInterviewQuestions` |
+
+---
+
 ### 2026-05-16 — Build Doc Corrections (v2.1)
 
 - Version header date corrected (was 2026-05-14, now reflects last actual update)
@@ -988,7 +1054,8 @@ Sessions are created by `getOrCreateVPSession()` in `lib/auth.ts`.
 - Explicit `mode` and `vehicleType` passed from the hub
 - `getOrCreateVPSession()` first looks for an existing non-expired, non-locked session of the same `mode + vehicleType`
 - If found: resumes it (same timer)
-- If not: creates a new one
+- If not found and mode is assessment: checks if a locked session exists for this `userId + vehicleType + loginToken` — if yes, blocks (attempt limit hit)
+- If clear: creates a new session, stores the `loginToken`
 
 ### Timer durations
 | Mode | Duration | Notes |
@@ -1013,6 +1080,19 @@ When the client-side countdown reaches 0, it calls `POST /api/sessions/lock`:
 
 ⚠️ **Known gap:** If the candidate closes the browser before time expires, the lock never fires client-side. The session sits expired-but-unlocked. No server-side cleanup job exists yet.
 
+### Attempt Limiting (v3.0)
+
+One assessment per vehicle per login. The `loginToken` ties the attempt to a specific login event.
+
+**VP hub display:**
+- Active session (not locked, not expired): "Resume (X:XX remaining)"
+- Locked session from current loginToken: "Completed ✓"
+- No session from current loginToken: "Start Assessment"
+
+**Retry:** log out → log back in (new UUID = new attempt). Admin intervention not required.
+
+**Training sessions are exempt** — `loginToken` check only applies for `mode=assessment`.
+
 ### Training vs Assessment — key behavioral differences
 
 | Behavior | Training | Assessment |
@@ -1022,6 +1102,73 @@ When the client-side countdown reaches 0, it calls `POST /api/sessions/lock`:
 | Proposals AI-scored | Yes (if manually submitted) | Yes (if manually submitted) |
 | Auto-submit on expiry | No | Yes (client-side) |
 | Advances `currentModule` | No | Yes → module3Done, currentModule=4 |
+
+---
+
+## Admin Features (v3.0)
+
+All admin routes live under `/admin/*` and `/api/admin/*`. Admin auth is enforced on every API route.
+
+### Behavioral Analytics
+**Route:** `/admin/candidates/[userId]` | **API:** `GET /api/admin/candidates/[userId]`
+
+Per-session metrics:
+
+| Metric | Source |
+|---|---|
+| Contracts viewed | `ContractView` count |
+| Contracts bid on | `Proposal` count |
+| Bid rate | proposals / views |
+| Avg time per proposal | `ContractView.timeSpentMs` |
+| Submission timing | whether most proposals came in last 5 min |
+| Tab switches | `Session.tabSwitchCount` |
+
+Linked from `/admin/users` ("View Candidate" per row).
+
+### Admin Proposal Viewer
+**Route:** `/admin/proposals/[id]`
+
+Full proposal text + AI score per dimension as progress bars + AI feedback (strengths/weaknesses/recommendation) + AI interview questions + score override form + behavioral context. Linked from proposals list.
+
+### Score Override
+**API:** `PATCH /api/admin/proposals/[id]/score` | **Body:** `{ adminScore, adminNotes }`
+
+If `adminScore` is set, displayed everywhere with ✎ indicator. `adminNotes` on hover. Stored as `adminScore` + `adminNotes` + `adminScoredAt`.
+
+### Cohort Management
+**Routes:** `/admin/cohorts` (list/create), `/admin/cohorts/[id]` (detail + cohort leaderboard)
+**APIs:** `GET/POST /api/admin/cohorts`, `GET/PATCH/DELETE /api/admin/cohorts/[id]`
+
+Admin creates named cohorts and assigns VPs. User assignment: `PATCH /api/admin/users/[id]` with `{ cohortId }` (pass `null` to remove).
+
+VP hub shows "My Cohort" / "Global" leaderboard toggle when assigned to a cohort.
+
+### Candidate Report (PDF)
+**API:** `GET /api/admin/candidates/[userId]/report` — returns `[name]-zam-report.pdf`
+
+Server-side PDF via `@react-pdf/renderer` (Node.js runtime). "Export Report" button on candidate detail page.
+
+| Section | Contents |
+|---|---|
+| Cover | Name, email, cohort, report date |
+| Executive Summary | Composite score, recommendation, proposal count, sessions |
+| Score Breakdown | Per vehicle: date, views, bid rate, avg score, timing |
+| Proposal Details | Per proposal: dimension table, strengths, weaknesses |
+| Interview Questions | AI-generated questions per proposal |
+| Admin Notes | Score overrides and notes |
+| Footer | "Generated by Zam.guv — KDT Internal Assessment Platform" |
+
+Live data — auto-scales as new proposals, cohorts, and features are added.
+
+### Tab-Switch Detection
+**Component:** `components/TabSwitchMonitor.tsx` | **API:** `POST /api/sessions/tab-switch`
+
+Invisible component in VP assessment layout. Uses `visibilitychange` + `sendBeacon` (fetch fallback). Creates `TabSwitchEvent`, increments `Session.tabSwitchCount`. Only active during assessment sessions. Admin views show ⚠️ badge if count > 2.
+
+### AI Interview Questions
+**Stored:** `Proposal.aiInterviewQuestions` (JSON array) | **Generated:** after scoring (second Claude call)
+
+3–5 specific questions targeting the proposal’s identified weaknesses. Surfaced on proposal detail page, candidate detail page, and PDF report.
 
 ---
 
@@ -1134,3 +1281,12 @@ The proposal table uses a unique constraint on `(contractId, userId)`. Candidate
 
 ### `currentModule` as training/assessment gate
 The login route determines session mode from `user.currentModule` rather than a URL parameter. This prevents candidates from bypassing the training sequence by directly hitting the assessment login URL. A candidate must have `currentModule > 2` (i.e., explicitly completed or skipped Module 02) before they get an assessment session.
+
+### loginToken for attempt limiting (v3.0)
+Each login generates `crypto.randomUUID()` stored in both the JWT and the Session record. Ties assessment sessions to a specific login event with no extra DB lookup per request. Log out → new token → fresh attempt. Training sessions are intentionally exempt.
+
+### `sendBeacon` for tab-switch detection (v3.0)
+`navigator.sendBeacon` is used over `fetch` in TabSwitchMonitor because browsers guarantee beacon delivery during page hide/unload. `fetch` can be aborted if the user immediately navigates away.
+
+### `@react-pdf/renderer` for PDF reports (v3.0)
+Chosen over Puppeteer (too heavy for serverless) and jsPDF (client-side only, poor layout control). Generates PDFs server-side in a Node.js runtime Vercel function using React component syntax. `export const runtime = "nodejs"` opts the route out of the default edge runtime.
