@@ -1,7 +1,7 @@
 # Zam.guv — Build Document & Features Reference
 
-**Version:** 2.0  
-**Updated:** 2026-05-14  
+**Version:** 2.1  
+**Updated:** 2026-05-16  
 **Live:** https://zam-guv.vercel.app  
 **Repo:** https://github.com/hugirecon/zam-guv  
 **Purpose:** Government contracting assessment and training platform for KDT VP candidate evaluation
@@ -186,8 +186,8 @@ A comprehensive GovCon knowledge base covering terminology, market landscape, co
 
 The module has three tabs across the top:
 
-**All tab (default)**  
-Previously named "Natural." Organized chronologically — terms appear in the order a VP would encounter them moving through a real contracting pipeline. Six pipeline stages with a clickable navigation strip at the top:
+**Overview tab (default)**  
+Previously named "Natural," then renamed "All," then renamed "Overview" during the 2026-05-15 audit. Organized chronologically — terms appear in the order a VP would encounter them moving through a real contracting pipeline. Six pipeline stages with a clickable navigation strip at the top:
 
 1. The Market — GovCon landscape, agencies, federal spend overview
 2. Register — SAM.gov, UEI, CAGE, portals (PIEE, FPDS, DSBS, eBuy)
@@ -221,7 +221,7 @@ Each block has a one-line description of how the frameworks in it relate to each
 
 A KDT Compliance Priority Timeline at the bottom of the Compliance tab gives a five-stage roadmap (Immediate → Year 1 → Year 1–2 → Year 2–3 → Ongoing) without assuming current compliance status.
 
-> **Pending feature:** Natural/Timeline toggle on the Compliance and Contract Vehicles tabs. Both tabs would gain a two-button toggle at the top — Natural view (current framework/category organization) and Timeline view (same terms, reorganized chronologically by when a VP would encounter them in the contracting pipeline). Approved, not yet built.
+> **Implemented (2026-05-14):** Natural/Timeline toggle on the Compliance and Contract Vehicles tabs. Both tabs have a two-button toggle at the top — Natural view (current framework/category organization) and Timeline view (same terms, reorganized chronologically by when a VP would encounter them in the contracting pipeline). No terms are exclusive to either view; the toggle is a presentation mode only.
 
 ---
 
@@ -673,8 +673,7 @@ The leaderboard fetches once on hub load. A VP who just completed a simulation a
 
 ### 🔵 Planned / Not Yet Built
 
-**Natural/Timeline toggle on Compliance and Contract Vehicles tabs (Module 01)**  
-Both tabs will gain a two-button view toggle: Natural (current organization) and Timeline (same terms, organized by when a VP encounters them in the contracting pipeline). All terms appear in both views — no information is exclusive to either. Approved, not yet built.
+**Natural/Timeline toggle** — implemented 2026-05-14. See Module 01 tab system documentation.
 
 ---
 
@@ -714,6 +713,15 @@ Passwords are set at creation time by the admin. To reset a password, delete and
 ---
 
 ## Changelog
+
+### 2026-05-16 — Build Doc Corrections (v2.1)
+
+- Version header date corrected (was 2026-05-14, now reflects last actual update)
+- Module 01 tab renamed from "All" → "Overview" during 2026-05-15 audit — doc now reflects this correctly
+- Natural/Timeline toggle removed from "Planned / Not Yet Built" section — it was implemented 2026-05-14 (commit `e4c366e`)
+- Added implementation note to Module 01 tab system documentation
+
+---
 
 ### 2026-05-15 — UI/UX Audit Fixes + Mobile Optimization
 
