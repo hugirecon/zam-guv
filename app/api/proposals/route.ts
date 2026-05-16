@@ -56,6 +56,16 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "proposedValue must be a positive number" }, { status: 400 });
   }
 
+  // Validate contract exists and matches the session's vehicle type
+  const contract = await prisma.contract.findUnique({ where: { id: contractId }, select: { id: true, vehicleType: true } });
+  if (!contract) return NextResponse.json({ error: "Contract not found" }, { status: 404 });
+  if (contract.vehicleType !== session.vehicleType) {
+    return NextResponse.json(
+      { error: `This contract is for ${contract.vehicleType} vehicle type but your session is ${session.vehicleType}` },
+      { status: 403 }
+    );
+  }
+
   // Upsert proposal (one per contract per user)
   const proposal = await prisma.proposal.upsert({
     where: { contractId_userId: { contractId, userId: user.id } },

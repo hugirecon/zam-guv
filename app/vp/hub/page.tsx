@@ -114,6 +114,8 @@ function getStatusLabel(status: VehicleStatus | null): {
   if (!status) return { label: "Not Started", class: "text-slate-400 bg-slate-800 border-slate-600" };
   if (status.completedThisLogin) return { label: "Completed ✓", class: "text-green-400 bg-green-950 border-green-700" };
   if (status.locked) return { label: "Completed", class: "text-green-400 bg-green-950 border-green-700" };
+  // Training sessions: no countdown shown — just "Active"
+  if (status.mode === "training") return { label: "Training Active", class: "text-yellow-400 bg-yellow-950 border-yellow-700" };
   const now = new Date();
   const expires = new Date(status.expiresAt);
   if (expires > now) {
