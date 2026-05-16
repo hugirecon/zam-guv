@@ -2,6 +2,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { SessionTimer } from "@/components/vp/SessionTimer";
+import { TabSwitchMonitor } from "@/components/TabSwitchMonitor";
 
 function TrainingBanner() {
   const router = useRouter();
@@ -209,6 +210,8 @@ export default function VPLayout({ children }: { children: React.ReactNode }) {
   const isAssessment = session && !session.locked && !isTraining;
 
   return (
+    <>
+    <TabSwitchMonitor sessionId={session?.id} isAssessment={!!isAssessment} />
     <div style={{ minHeight: "100vh", background: "#f0f0f0", fontFamily: "Source Sans Pro, system-ui, -apple-system, sans-serif" }}>
       {/* Official government banner */}
       <div style={{ background: "#1b1b1b", padding: "4px 0" }}>
@@ -324,5 +327,6 @@ export default function VPLayout({ children }: { children: React.ReactNode }) {
         </div>
       </footer>
     </div>
+    </>
   );
 }

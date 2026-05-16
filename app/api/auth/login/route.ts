@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { signToken, getOrCreateVPSession } from "@/lib/auth";
 import bcrypt from "bcryptjs";
+import { randomUUID } from "crypto";
 
 export async function POST(req: NextRequest) {
   const { email, password, vehicleType = 'Standard' } = await req.json();
@@ -16,15 +17,18 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Invalid credentials" }, { status: 401 });
   }
 
+  // Feature 6: generate a unique loginToken for this login session
+  const loginToken = randomUUID();
+
   let sessionId: string | undefined;
   if (user.role === "vp") {
     // Session type is derived from currentModule, not from the request flag
     const trainingMode = user.currentModule <= 2;
-    const session = await getOrCreateVPSession(user.id, trainingMode, vehicleType);
+    const session = await getOrCreateVPSession(user.id, trainingMode, vehicleType, loginToken);
     sessionId = session.id;
   }
 
-  const token = signToken({ userId: user.id, role: user.role, sessionId });
+  const token = signToken({ userId: user.id, role: user.role, sessionId, loginToken });
 
   const res = NextResponse.json({
     user: { id: user.id, name: user.name, email: user.email, role: user.role },

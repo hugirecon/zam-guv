@@ -13,9 +13,10 @@ export async function GET() {
         id: true,
         name: true,
         proposals: {
-          where: { status: "submitted", aiScore: { not: null } },
+          where: { status: "submitted" },
           select: {
             aiScore: true,
+            adminScore: true,
             session: { select: { vehicleType: true, locked: true } },
           },
         },
@@ -23,7 +24,13 @@ export async function GET() {
     });
 
     const entries = users.map((u) => {
-      const scores = u.proposals.map((p) => p.aiScore!);
+      // Feature 3: use adminScore if set, else aiScore
+      const scoredProposals = u.proposals.filter(
+        (p) => p.adminScore != null || p.aiScore != null
+      );
+      const scores = scoredProposals.map((p) => p.adminScore ?? p.aiScore!);
+      const hasAdminOverride = u.proposals.some((p) => p.adminScore != null);
+
       const compositeScore =
         scores.length > 0
           ? Math.round((scores.reduce((a, b) => a + b, 0) / scores.length) * 10) / 10
@@ -45,6 +52,7 @@ export async function GET() {
         proposalCount: u.proposals.length,
         vehiclesCompleted,
         bestScore,
+        hasAdminOverride,
         isCurrentUser: currentUser?.id === u.id,
       };
     });

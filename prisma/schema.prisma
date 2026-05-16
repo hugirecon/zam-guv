@@ -23,8 +23,14 @@ model User {
   module2Done   Boolean @default(false)
   module3Done   Boolean @default(false)
 
-  sessions  Session[]
-  proposals Proposal[]
+  // Cohort assignment (Feature 4)
+  cohortId      String?
+  cohort        Cohort?  @relation(fields: [cohortId], references: [id])
+
+  sessions       Session[]
+  proposals      Proposal[]
+  contractViews  ContractView[]
+  tabSwitchEvents TabSwitchEvent[]
 }
 
 model Contract {
@@ -47,7 +53,8 @@ model Contract {
   vehicleType      String   @default("Standard")  // "Standard" | "IDIQ" | "OTA" | "GSA" | "SBIR"
   status           String   @default("active") // "active" | "closed" | "awarded"
 
-  proposals Proposal[]
+  proposals     Proposal[]
+  contractViews ContractView[]
 }
 
 model Session {
@@ -61,8 +68,16 @@ model Session {
   mode        String   @default("assessment") // "assessment" | "training"
   vehicleType String   @default("Standard")  // "Standard" | "IDIQ" | "OTA" | "GSA" | "SBIR"
 
-  user      User       @relation(fields: [userId], references: [id])
-  proposals Proposal[]
+  // Feature 6: attempt limiting — tracks which login token created this session
+  loginToken  String?
+
+  // Feature 7: tab switch tracking
+  tabSwitchCount Int @default(0)
+
+  user            User             @relation(fields: [userId], references: [id])
+  proposals       Proposal[]
+  contractViews   ContractView[]
+  tabSwitchEvents TabSwitchEvent[]
 }
 
 model Proposal {
@@ -70,28 +85,36 @@ model Proposal {
   contractId      String
   userId          String
   sessionId       String
-  
+
   // Proposal content
   executiveSummary   String
   technicalApproach  String
   managementApproach String
   pricingNarrative   String
   pastPerformance    String
-  
+
   // Pricing
   proposedValue   Float
-  
+
   // Status
   status          String   @default("draft") // "draft" | "submitted"
   submittedAt     DateTime?
   autoSubmitted   Boolean  @default(false) // true if session expired mid-draft
-  
+
   // AI Scoring (populated after submission)
   aiScore         Float?   // 0-100
   aiScoreBreakdown String?  // JSON: { technical, management, pricing, past_performance, compliance }
-  aiFeedback      String?
+  aiFeedback      String?  // JSON: { strengths, weaknesses, recommendation, feedback }
   aiScoredAt      DateTime?
-  
+
+  // Feature 8: AI-generated interview questions
+  aiInterviewQuestions String?  // JSON array of 3-5 question strings
+
+  // Feature 3: Admin score override
+  adminScore      Float?
+  adminNotes      String?
+  adminScoredAt   DateTime?
+
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 
@@ -100,4 +123,41 @@ model Proposal {
   session  Session  @relation(fields: [sessionId], references: [id])
 
   @@unique([contractId, userId]) // one proposal per contract per VP
+}
+
+// Feature 1: Behavioral Analytics — contract view tracking
+model ContractView {
+  id          String   @id @default(cuid())
+  userId      String
+  contractId  String
+  sessionId   String
+  viewedAt    DateTime @default(now())
+  timeSpentMs Int?
+
+  user     User     @relation(fields: [userId], references: [id])
+  contract Contract @relation(fields: [contractId], references: [id])
+  session  Session  @relation(fields: [sessionId], references: [id])
+
+  @@unique([contractId, userId, sessionId])
+}
+
+// Feature 4: Cohort grouping
+model Cohort {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  createdAt   DateTime @default(now())
+
+  users User[]
+}
+
+// Feature 7: Tab switch events
+model TabSwitchEvent {
+  id        String   @id @default(cuid())
+  userId    String
+  sessionId String
+  occurredAt DateTime @default(now())
+
+  user    User    @relation(fields: [userId], references: [id])
+  session Session @relation(fields: [sessionId], references: [id])
 }

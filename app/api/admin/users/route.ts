@@ -18,6 +18,7 @@ export async function GET() {
         take: 1,
         select: { startedAt: true, vehicleType: true, locked: true },
       },
+      cohort: { select: { id: true, name: true } },
     },
     orderBy: { createdAt: "desc" },
   });
@@ -64,6 +65,23 @@ export async function POST(req: Request) {
   return NextResponse.json(created, { status: 201 });
 }
 
+export async function PATCH(req: Request) {
+  const admin = await getAuthUser();
+  if (!admin || admin.role !== "admin") {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
+
+  const { id, cohortId } = await req.json();
+
+  const updated = await prisma.user.update({
+    where: { id },
+    data: { cohortId: cohortId || null },
+    select: { id: true, cohortId: true, cohort: { select: { id: true, name: true } } },
+  });
+
+  return NextResponse.json(updated);
+}
+
 export async function DELETE(req: Request) {
   const admin = await getAuthUser();
   if (!admin || admin.role !== "admin") {
@@ -72,7 +90,9 @@ export async function DELETE(req: Request) {
 
   const { id } = await req.json();
 
-  // Delete proposals first, then sessions, then user
+  // Delete in dependency order
+  await prisma.tabSwitchEvent.deleteMany({ where: { userId: id } });
+  await prisma.contractView.deleteMany({ where: { userId: id } });
   await prisma.proposal.deleteMany({ where: { userId: id } });
   await prisma.session.deleteMany({ where: { userId: id } });
   await prisma.user.delete({ where: { id } });

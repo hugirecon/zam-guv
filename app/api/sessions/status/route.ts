@@ -10,6 +10,7 @@ type VehicleStatus = {
   locked: boolean;
   expiresAt: Date;
   proposalCount: number;
+  completedThisLogin: boolean; // Feature 6
 } | null;
 
 export async function GET() {
@@ -26,6 +27,7 @@ export async function GET() {
       locked: true,
       expiresAt: true,
       startedAt: true,
+      loginToken: true,
       _count: { select: { proposals: true } },
     },
     orderBy: { startedAt: "desc" },
@@ -35,15 +37,25 @@ export async function GET() {
 
   for (const vt of VEHICLE_TYPES) {
     const session = sessions.find((s) => s.vehicleType === vt);
-    result[vt] = session
-      ? {
-          sessionId: session.id,
-          mode: session.mode,
-          locked: session.locked,
-          expiresAt: session.expiresAt,
-          proposalCount: session._count.proposals,
-        }
-      : null;
+    if (!session) {
+      result[vt] = null;
+      continue;
+    }
+    // Feature 6: completedThisLogin = locked assessment session with same loginToken
+    const completedThisLogin =
+      session.locked &&
+      session.mode === "assessment" &&
+      !!user.loginToken &&
+      session.loginToken === user.loginToken;
+
+    result[vt] = {
+      sessionId: session.id,
+      mode: session.mode,
+      locked: session.locked,
+      expiresAt: session.expiresAt,
+      proposalCount: session._count.proposals,
+      completedThisLogin,
+    };
   }
 
   return NextResponse.json(result);

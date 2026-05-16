@@ -1,6 +1,12 @@
 "use client";
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { Card } from "@/components/ui/Card";
+
+interface Cohort {
+  id: string;
+  name: string;
+}
 
 interface VPUser {
   id: string;
@@ -8,6 +14,7 @@ interface VPUser {
   email: string;
   createdAt: string;
   currentModule: number;
+  cohort: { id: string; name: string } | null;
   _count: { sessions: number; proposals: number };
   sessions: { startedAt: string; vehicleType: string; locked: boolean }[];
 }
@@ -33,6 +40,7 @@ const VEHICLE_OPTIONS = ["Any", "IDIQ", "OTA", "GSA", "SBIR"];
 
 export default function AdminUsers() {
   const [users, setUsers] = useState<VPUser[]>([]);
+  const [cohorts, setCohorts] = useState<Cohort[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -46,9 +54,14 @@ export default function AdminUsers() {
 
   function loadUsers() {
     setLoading(true);
-    fetch("/api/admin/users")
-      .then((r) => r.json())
-      .then(setUsers)
+    Promise.all([
+      fetch("/api/admin/users").then((r) => r.json()),
+      fetch("/api/admin/cohorts").then((r) => r.json()),
+    ])
+      .then(([u, c]) => {
+        setUsers(u);
+        setCohorts(c);
+      })
       .finally(() => setLoading(false));
   }
 
@@ -88,6 +101,15 @@ export default function AdminUsers() {
       method: "DELETE",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ id: user.id }),
+    });
+    loadUsers();
+  }
+
+  async function handleCohortAssign(userId: string, cohortId: string) {
+    await fetch("/api/admin/users", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id: userId, cohortId: cohortId || null }),
     });
     loadUsers();
   }
@@ -188,6 +210,7 @@ export default function AdminUsers() {
                 <tr>
                   <th className="text-left px-6 py-3 font-medium">Name</th>
                   <th className="text-left px-6 py-3 font-medium">Email</th>
+                  <th className="text-left px-6 py-3 font-medium">Cohort</th>
                   <th className="text-left px-6 py-3 font-medium">Sessions</th>
                   <th className="text-left px-6 py-3 font-medium">Proposals</th>
                   <th className="text-left px-6 py-3 font-medium">Last Active</th>
@@ -200,8 +223,24 @@ export default function AdminUsers() {
                   const lastSession = u.sessions[0] ?? null;
                   return (
                     <tr key={u.id} className="hover:bg-gray-50">
-                      <td className="px-6 py-4 text-sm font-medium text-gray-900">{u.name}</td>
+                      <td className="px-6 py-4 text-sm font-medium text-gray-900">
+                        <Link href={`/admin/candidates/${u.id}`} className="text-blue-600 hover:underline">
+                          {u.name}
+                        </Link>
+                      </td>
                       <td className="px-6 py-4 text-sm text-gray-600">{u.email}</td>
+                      <td className="px-6 py-4">
+                        <select
+                          value={u.cohort?.id ?? ""}
+                          onChange={(e) => handleCohortAssign(u.id, e.target.value)}
+                          className="text-xs border border-gray-200 rounded px-2 py-1 bg-white focus:outline-none focus:ring-1 focus:ring-blue-500 max-w-32"
+                        >
+                          <option value="">No cohort</option>
+                          {cohorts.map((c) => (
+                            <option key={c.id} value={c.id}>{c.name}</option>
+                          ))}
+                        </select>
+                      </td>
                       <td className="px-6 py-4 text-sm font-semibold text-gray-700">{u._count.sessions}</td>
                       <td className="px-6 py-4">
                         <span className={`text-sm font-semibold ${u._count.proposals > 0 ? "text-blue-600" : "text-gray-400"}`}>
@@ -220,7 +259,10 @@ export default function AdminUsers() {
                           <span className="text-gray-400 text-xs">—</span>
                         )}
                       </td>
-                      <td className="px-6 py-4 text-right">
+                      <td className="px-6 py-4 text-right space-x-3">
+                        <Link href={`/admin/candidates/${u.id}`} className="text-xs text-blue-600 hover:text-blue-800 font-medium">
+                          View
+                        </Link>
                         <button
                           onClick={() => handleDelete(u)}
                           className="text-xs text-red-500 hover:text-red-700 font-medium transition-colors"

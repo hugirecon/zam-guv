@@ -114,6 +114,16 @@ Be rigorous. Grade based on specificity, relevance to requirements, and win prob
 
     const result = JSON.parse(jsonMatch[0]);
 
+    // Feature 8: Generate interview questions based on weaknesses
+    let interviewQuestionsJson: string | null = null;
+    if (result.weaknesses?.length > 0) {
+      interviewQuestionsJson = await generateInterviewQuestions(
+        proposal.contract.title,
+        result.weaknesses,
+        result.feedback
+      );
+    }
+
     await prisma.proposal.update({
       where: { id: proposalId },
       data: {
@@ -126,9 +136,56 @@ Be rigorous. Grade based on specificity, relevance to requirements, and win prob
           feedback: result.feedback,
         }),
         aiScoredAt: new Date(),
+        ...(interviewQuestionsJson && { aiInterviewQuestions: interviewQuestionsJson }),
       },
     });
   } catch (err) {
     console.error("AI scoring failed:", err);
+  }
+}
+
+// Feature 8: Second Claude call to generate interview questions
+async function generateInterviewQuestions(
+  contractTitle: string,
+  weaknesses: string[],
+  feedback: string
+): Promise<string | null> {
+  try {
+    const prompt = `You are a senior government contracting evaluator conducting a follow-up interview with a VP candidate.
+
+Based on the following weaknesses identified in their proposal for "${contractTitle}":
+${weaknesses.map((w, i) => `${i + 1}. ${w}`).join("\n")}
+
+Overall assessment: ${feedback}
+
+Generate 3-5 specific, probing interview questions designed to:
+1. Explore the root cause of each weakness
+2. Assess whether the candidate understands the gap
+3. Give them an opportunity to demonstrate deeper knowledge
+
+Questions should be specific to the weaknesses, not generic. They should be challenging but fair.
+
+Return ONLY a JSON array of question strings, no other text:
+["Question 1?", "Question 2?", "Question 3?"]`;
+
+    const message = await anthropic.messages.create({
+      model: "claude-opus-4-5",
+      max_tokens: 512,
+      messages: [{ role: "user", content: prompt }],
+    });
+
+    const content = message.content[0];
+    if (content.type !== "text") return null;
+
+    const jsonMatch = content.text.match(/\[[\s\S]*\]/);
+    if (!jsonMatch) return null;
+
+    const questions = JSON.parse(jsonMatch[0]);
+    if (!Array.isArray(questions)) return null;
+
+    return JSON.stringify(questions.slice(0, 5));
+  } catch (err) {
+    console.error("Interview question generation failed:", err);
+    return null;
   }
 }

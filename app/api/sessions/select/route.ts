@@ -9,24 +9,44 @@ export async function POST(req: NextRequest) {
   const { vehicleType, mode } = await req.json();
   const trainingMode = mode === "training";
 
-  const session = await getOrCreateVPSession(user.id, trainingMode, vehicleType);
+  try {
+    const session = await getOrCreateVPSession(
+      user.id,
+      trainingMode,
+      vehicleType,
+      user.loginToken // Feature 6: pass loginToken so attempt blocking works
+    );
 
-  const token = signToken({ userId: user.id, role: user.role, sessionId: session.id });
+    const token = signToken({
+      userId: user.id,
+      role: user.role,
+      sessionId: session.id,
+      loginToken: user.loginToken,
+    });
 
-  const res = NextResponse.json({
-    sessionId: session.id,
-    vehicleType: session.vehicleType,
-    mode: session.mode,
-    expiresAt: session.expiresAt,
-    locked: session.locked,
-  });
+    const res = NextResponse.json({
+      sessionId: session.id,
+      vehicleType: session.vehicleType,
+      mode: session.mode,
+      expiresAt: session.expiresAt,
+      locked: session.locked,
+    });
 
-  res.cookies.set("zam-token", token, {
-    httpOnly: true,
-    path: "/",
-    maxAge: 8 * 60 * 60,
-    sameSite: "lax",
-  });
+    res.cookies.set("zam-token", token, {
+      httpOnly: true,
+      path: "/",
+      maxAge: 8 * 60 * 60,
+      sameSite: "lax",
+    });
 
-  return res;
+    return res;
+  } catch (err) {
+    if (err instanceof Error && err.message.startsWith("ATTEMPT_BLOCKED")) {
+      return NextResponse.json(
+        { error: "You have already completed this vehicle assessment in this login session." },
+        { status: 409 }
+      );
+    }
+    throw err;
+  }
 }

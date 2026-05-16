@@ -18,6 +18,7 @@ interface LeaderboardEntry {
   proposalCount: number;
   vehiclesCompleted: number;
   bestScore: number | null;
+  hasAdminOverride: boolean;
   isCurrentUser: boolean;
 }
 
@@ -27,6 +28,7 @@ interface VehicleStatus {
   locked: boolean;
   expiresAt: string;
   proposalCount: number;
+  completedThisLogin: boolean;
 }
 
 type StatusMap = Record<string, VehicleStatus | null>;
@@ -109,6 +111,7 @@ function getStatusLabel(status: VehicleStatus | null): {
   class: string;
 } {
   if (!status) return { label: "Not Started", class: "text-slate-400 bg-slate-800 border-slate-600" };
+  if (status.completedThisLogin) return { label: "Completed ✓", class: "text-green-400 bg-green-950 border-green-700" };
   if (status.locked) return { label: "Completed", class: "text-green-400 bg-green-950 border-green-700" };
   const now = new Date();
   const expires = new Date(status.expiresAt);
@@ -336,7 +339,10 @@ export default function VPHub() {
                       {entry.compositeScore !== null ? (
                         <span className={`text-sm font-bold ${
                           entry.compositeScore >= 80 ? "text-emerald-400" : entry.compositeScore >= 60 ? "text-blue-400" : entry.compositeScore >= 40 ? "text-amber-400" : "text-red-400"
-                        }`}>{entry.compositeScore}</span>
+                        }`}>
+                          {entry.compositeScore}
+                          {entry.hasAdminOverride && <span className="text-xs ml-0.5 opacity-70">✎</span>}
+                        </span>
                       ) : <span className="text-slate-600 text-sm">—</span>}
                     </div>
                     <div className="col-span-2 text-right"><span className="text-slate-400 text-sm">{entry.proposalCount}</span></div>
@@ -355,7 +361,10 @@ export default function VPHub() {
                       {entry.compositeScore !== null ? (
                         <span className={`text-sm font-bold ${
                           entry.compositeScore >= 80 ? "text-emerald-400" : entry.compositeScore >= 60 ? "text-blue-400" : entry.compositeScore >= 40 ? "text-amber-400" : "text-red-400"
-                        }`}>{entry.compositeScore}</span>
+                        }`}>
+                          {entry.compositeScore}
+                          {entry.hasAdminOverride && <span className="text-xs ml-0.5 opacity-70">✎</span>}
+                        </span>
                       ) : <span className="text-slate-600 text-sm">—</span>}
                     </div>
                   </div>
@@ -419,13 +428,19 @@ function VehicleCard({
 
       {/* Buttons */}
       <div className="flex flex-col gap-2 mt-auto pt-2">
-        <button
-          onClick={() => onEnter(v.key)}
-          disabled={!!entering}
-          className={`w-full text-white text-sm font-semibold py-2.5 px-4 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${v.btn}`}
-        >
-          {isEnteringSim ? "Loading…" : "Enter Simulation"}
-        </button>
+        {status?.completedThisLogin ? (
+          <div className="w-full text-center text-sm font-semibold py-2.5 px-4 rounded-lg bg-green-950 border border-green-700 text-green-400 cursor-not-allowed">
+            Assessment Completed ✓
+          </div>
+        ) : (
+          <button
+            onClick={() => onEnter(v.key)}
+            disabled={!!entering}
+            className={`w-full text-white text-sm font-semibold py-2.5 px-4 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${v.btn}`}
+          >
+            {isEnteringSim ? "Loading…" : "Enter Simulation"}
+          </button>
+        )}
         <button
           onClick={() => onEnter(v.key, "training")}
           disabled={!!entering}

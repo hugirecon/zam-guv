@@ -19,5 +19,26 @@ export async function GET(
 
   if (!contract) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
+  // Feature 1: Track contract view for VPs
+  if (user.role === "vp" && user.sessionId) {
+    await prisma.contractView.upsert({
+      where: {
+        contractId_userId_sessionId: {
+          contractId: id,
+          userId: user.id,
+          sessionId: user.sessionId,
+        },
+      },
+      create: {
+        contractId: id,
+        userId: user.id,
+        sessionId: user.sessionId,
+      },
+      update: {
+        viewedAt: new Date(),
+      },
+    });
+  }
+
   return NextResponse.json(contract);
 }

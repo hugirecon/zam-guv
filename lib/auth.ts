@@ -8,6 +8,7 @@ export interface TokenPayload {
   userId: string;
   role: string;
   sessionId?: string;
+  loginToken?: string; // Feature 6: tracks which login created this JWT
 }
 
 export function signToken(payload: TokenPayload): string {
@@ -33,12 +34,35 @@ export async function getAuthUser() {
     where: { id: payload.userId },
     select: { id: true, name: true, email: true, role: true },
   });
-  return user ? { ...user, sessionId: payload.sessionId } : null;
+  return user
+    ? { ...user, sessionId: payload.sessionId, loginToken: payload.loginToken }
+    : null;
 }
 
-export async function getOrCreateVPSession(userId: string, trainingMode = false, vehicleType = 'Standard') {
+export async function getOrCreateVPSession(
+  userId: string,
+  trainingMode = false,
+  vehicleType = "Standard",
+  loginToken?: string
+) {
   const now = new Date();
   const mode = trainingMode ? "training" : "assessment";
+
+  // Feature 6: For assessment mode, block if a LOCKED session already exists for this loginToken
+  if (!trainingMode && loginToken) {
+    const locked = await prisma.session.findFirst({
+      where: {
+        userId,
+        mode: "assessment",
+        vehicleType,
+        locked: true,
+        loginToken,
+      },
+    });
+    if (locked) {
+      throw new Error("ATTEMPT_BLOCKED: assessment already completed for this vehicle in this login session");
+    }
+  }
 
   // Find an active (non-expired, non-locked) session of the same mode and vehicleType
   const existing = await prisma.session.findFirst({
@@ -63,6 +87,7 @@ export async function getOrCreateVPSession(userId: string, trainingMode = false,
       mode,
       vehicleType,
       expiresAt: new Date(now.getTime() + expiryMs),
+      loginToken: loginToken ?? null,
     },
   });
 }

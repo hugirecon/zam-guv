@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { Badge } from "@/components/ui/Badge";
 import { Card, CardHeader, CardContent } from "@/components/ui/Card";
 
@@ -8,12 +9,13 @@ interface Proposal {
   status: string;
   proposedValue: number;
   aiScore: number | null;
+  adminScore: number | null;
   aiFeedback: string | null;
   aiScoreBreakdown: string | null;
   submittedAt: string | null;
   autoSubmitted: boolean;
   contract: { title: string; solicNumber: string; agency: string };
-  user: { name: string; email: string };
+  user: { id: string; name: string; email: string };
 }
 
 export default function AdminProposals() {
@@ -61,31 +63,49 @@ export default function AdminProposals() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-100">
-                    {proposals.map(p => (
+                    {proposals.map(p => {
+                      const displayScore = p.adminScore ?? p.aiScore;
+                      return (
                       <tr
                         key={p.id}
                         className="hover:bg-gray-50 cursor-pointer"
                         onClick={() => setSelected(selected?.id === p.id ? null : p)}
                       >
                         <td className="px-4 py-3">
-                          <p className="text-sm font-medium text-gray-900 max-w-48 truncate">{p.contract.title}</p>
+                          <Link
+                            href={`/admin/proposals/${p.id}`}
+                            className="text-sm font-medium text-blue-600 hover:underline max-w-48 truncate block"
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            {p.contract.title}
+                          </Link>
                           <p className="text-xs font-mono text-gray-500">{p.contract.solicNumber}</p>
                         </td>
-                        <td className="px-4 py-3 text-sm text-gray-600">{p.user.name}</td>
+                        <td className="px-4 py-3 text-sm text-gray-600">
+                          <Link
+                            href={`/admin/candidates/${p.user.id}`}
+                            className="hover:underline text-blue-600"
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            {p.user.name}
+                          </Link>
+                        </td>
                         <td className="px-4 py-3">
                           <Badge variant={p.status === "submitted" ? "success" : "warning"}>
                             {p.status}
                           </Badge>
                           {p.autoSubmitted && <span className="ml-1 text-xs text-gray-400">(auto)</span>}
                         </td>
-                        <td className={`px-4 py-3 font-bold text-lg ${scoreColor(p.aiScore)}`}>
-                          {p.aiScore !== null ? p.aiScore.toFixed(0) : "—"}
+                        <td className={`px-4 py-3 font-bold text-lg ${scoreColor(displayScore)}`}>
+                          {displayScore !== null ? displayScore.toFixed(0) : "—"}
+                          {p.adminScore !== null && <span className="text-xs ml-0.5">✎</span>}
                         </td>
                         <td className="px-4 py-3 text-sm text-gray-700">
                           {p.proposedValue ? `$${(p.proposedValue/1e6).toFixed(1)}M` : "—"}
                         </td>
                       </tr>
-                    ))}
+                      );
+                    })}
                   </tbody>
                 </table>
               </div>
