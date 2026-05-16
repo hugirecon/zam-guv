@@ -19,20 +19,23 @@ export async function PATCH(
     return NextResponse.json({ error: "adminScore must be 0-100" }, { status: 400 });
   }
 
-  const updated = await prisma.proposal.update({
-    where: { id },
-    data: {
-      adminScore,
-      adminNotes: adminNotes || null,
-      adminScoredAt: new Date(),
-    },
-    select: {
-      id: true,
-      adminScore: true,
-      adminNotes: true,
-      adminScoredAt: true,
-    },
-  });
-
-  return NextResponse.json(updated);
+  try {
+    const updated = await prisma.proposal.update({
+      where: { id },
+      data: {
+        adminScore,
+        adminNotes: adminNotes || null,
+        adminScoredAt: new Date(),
+      },
+      select: {
+        id: true,
+        adminScore: true,
+        adminNotes: true,
+        adminScoredAt: true,
+      },
+    });
+    return NextResponse.json(updated);
+  } catch {
+    return NextResponse.json({ error: "Proposal not found" }, { status: 404 });
+  }
 }

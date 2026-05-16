@@ -157,7 +157,9 @@ export default function VPHub() {
 
   useEffect(() => {
     if (!user) return;
-    const url = lbScope === "cohort" && user.cohort?.id
+    // Skip the global fetch on initial mount (already fetched in Promise.all above)
+    if (lbScope === "global") return;
+    const url = user.cohort?.id
       ? `/api/leaderboard?cohortId=${user.cohort.id}`
       : "/api/leaderboard";
     fetch(url).then((r) => r.json()).then((d) => setLeaderboard(d.entries ?? []));

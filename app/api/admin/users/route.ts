@@ -90,12 +90,14 @@ export async function DELETE(req: Request) {
 
   const { id } = await req.json();
 
-  // Delete in dependency order
-  await prisma.tabSwitchEvent.deleteMany({ where: { userId: id } });
-  await prisma.contractView.deleteMany({ where: { userId: id } });
-  await prisma.proposal.deleteMany({ where: { userId: id } });
-  await prisma.session.deleteMany({ where: { userId: id } });
-  await prisma.user.delete({ where: { id } });
+  // Delete in dependency order inside a transaction — all or nothing
+  await prisma.$transaction([
+    prisma.tabSwitchEvent.deleteMany({ where: { userId: id } }),
+    prisma.contractView.deleteMany({ where: { userId: id } }),
+    prisma.proposal.deleteMany({ where: { userId: id } }),
+    prisma.session.deleteMany({ where: { userId: id } }),
+    prisma.user.delete({ where: { id } }),
+  ]);
 
   return NextResponse.json({ deleted: true });
 }

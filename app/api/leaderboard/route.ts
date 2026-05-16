@@ -14,7 +14,8 @@ export async function GET(req: NextRequest) {
         id: true,
         name: true,
         proposals: {
-          where: { status: "submitted" },
+          // Only count proposals from locked ASSESSMENT sessions — not training
+          where: { status: "submitted", session: { mode: "assessment", locked: true } },
           select: {
             aiScore: true,
             adminScore: true,

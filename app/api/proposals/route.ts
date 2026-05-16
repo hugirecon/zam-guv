@@ -49,6 +49,13 @@ export async function POST(req: NextRequest) {
   const body = await req.json();
   const { contractId, executiveSummary, technicalApproach, managementApproach, pricingNarrative, pastPerformance, proposedValue } = body;
 
+  if (!contractId) return NextResponse.json({ error: "contractId required" }, { status: 400 });
+
+  const parsedValue = parseFloat(proposedValue);
+  if (isNaN(parsedValue) || parsedValue < 0) {
+    return NextResponse.json({ error: "proposedValue must be a positive number" }, { status: 400 });
+  }
+
   // Upsert proposal (one per contract per user)
   const proposal = await prisma.proposal.upsert({
     where: { contractId_userId: { contractId, userId: user.id } },
@@ -58,7 +65,7 @@ export async function POST(req: NextRequest) {
       managementApproach,
       pricingNarrative,
       pastPerformance,
-      proposedValue: parseFloat(proposedValue),
+      proposedValue: parsedValue,
       updatedAt: new Date(),
     },
     create: {
@@ -70,7 +77,7 @@ export async function POST(req: NextRequest) {
       managementApproach,
       pricingNarrative,
       pastPerformance,
-      proposedValue: parseFloat(proposedValue),
+      proposedValue: parsedValue,
     },
   });
 
