@@ -1,14 +1,15 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getAuthUser } from "@/lib/auth";
 
-export async function GET() {
+export async function GET(req: NextRequest) {
   try {
     const currentUser = await getAuthUser();
+    const cohortId = req.nextUrl.searchParams.get("cohortId") || null;
 
     // All VP users with their scored, submitted proposals
     const users = await prisma.user.findMany({
-      where: { role: "vp" },
+      where: { role: "vp", ...(cohortId ? { cohortId } : {}) },
       select: {
         id: true,
         name: true,

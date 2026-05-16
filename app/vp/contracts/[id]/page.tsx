@@ -299,6 +299,22 @@ export default function ContractDetailPage() {
   const scoreCardRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    // Track time spent on this contract page for behavioral analytics
+    const openedAt = Date.now();
+    return () => {
+      const timeSpentMs = Date.now() - openedAt;
+      if (timeSpentMs > 1000) { // ignore sub-second navigations
+        fetch(`/api/contracts/${id}/view`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ timeSpentMs }),
+          keepalive: true, // send even if page is closing
+        }).catch(() => {});
+      }
+    };
+  }, [id]);
+
+  useEffect(() => {
     fetch(`/api/contracts/${id}`)
       .then((r) => r.json())
       .then(setContract);

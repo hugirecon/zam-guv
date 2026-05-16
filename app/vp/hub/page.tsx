@@ -8,6 +8,7 @@ interface User {
   name: string;
   email: string;
   role: string;
+  cohort?: { id: string; name: string } | null;
 }
 
 interface LeaderboardEntry {
@@ -133,6 +134,7 @@ export default function VPHub() {
   const [entering, setEntering] = useState<string | null>(null);
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [lbScope, setLbScope] = useState<"global" | "cohort">("global");
 
   useEffect(() => {
     Promise.all([
@@ -152,6 +154,14 @@ export default function VPHub() {
       .catch(() => router.replace("/login"))
       .finally(() => setLoading(false));
   }, [router]);
+
+  useEffect(() => {
+    if (!user) return;
+    const url = lbScope === "cohort" && user.cohort?.id
+      ? `/api/leaderboard?cohortId=${user.cohort.id}`
+      : "/api/leaderboard";
+    fetch(url).then((r) => r.json()).then((d) => setLeaderboard(d.entries ?? []));
+  }, [lbScope, user]);
 
   const handleEnter = async (vehicleKey: string, mode?: string) => {
     const key = `${vehicleKey}-${mode ?? "sim"}`;
@@ -289,9 +299,25 @@ export default function VPHub() {
 
       {/* LEADERBOARD */}
       <div className="max-w-7xl mx-auto px-6 pb-20">
-        <div className="mb-6 flex items-center gap-4">
+        <div className="mb-6 flex items-center gap-4 flex-wrap">
           <h2 className="text-xl font-bold text-white">🏆 Leaderboard</h2>
           <div className="flex-1 h-px bg-slate-700" />
+          {user?.cohort && (
+            <div className="flex items-center gap-1 bg-slate-800 border border-slate-700 rounded-lg p-1">
+              <button
+                onClick={() => setLbScope("global")}
+                className={`px-3 py-1 text-xs font-semibold rounded-md transition-colors ${
+                  lbScope === "global" ? "bg-blue-600 text-white" : "text-slate-400 hover:text-white"
+                }`}
+              >Global</button>
+              <button
+                onClick={() => setLbScope("cohort")}
+                className={`px-3 py-1 text-xs font-semibold rounded-md transition-colors ${
+                  lbScope === "cohort" ? "bg-blue-600 text-white" : "text-slate-400 hover:text-white"
+                }`}
+              >My Cohort</button>
+            </div>
+          )}
           <span className="text-slate-500 text-xs">Ranked by composite AI score</span>
         </div>
 

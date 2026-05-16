@@ -54,7 +54,8 @@ interface Stats {
   submittedProposals: number;
   bidRate: number | null;
   avgTimePerProposalMs: number | null;
-  submissionTimings: number[];
+  submissionTimings: { minutes: number; rushed: boolean }[];
+  rushedCount: number;
 }
 
 function fmtMs(ms: number) {
@@ -168,15 +169,15 @@ export default function CandidateDetailPage() {
             <h2 className="font-semibold text-gray-900">Submission Timing Behavior</h2>
           </CardHeader>
           <CardContent>
-            <p className="text-sm text-gray-500 mb-3">Minutes from session start when each proposal was submitted:</p>
+            <p className="text-sm text-gray-500 mb-3">Minutes from session start when each proposal was submitted. {stats.rushedCount > 0 && <span className="text-orange-600 font-semibold">{stats.rushedCount} rushed (≥25 min)</span>}</p>
             <div className="flex flex-wrap gap-2">
               {stats.submissionTimings.map((t, i) => (
                 <span key={i} className={`px-3 py-1 rounded-full text-sm font-semibold border ${
-                  t < 10 ? "bg-red-50 text-red-700 border-red-200" :
-                  t < 20 ? "bg-yellow-50 text-yellow-700 border-yellow-200" :
-                  "bg-green-50 text-green-700 border-green-200"
+                  t.rushed ? "bg-orange-50 text-orange-700 border-orange-300" :
+                  t.minutes < 15 ? "bg-green-50 text-green-700 border-green-200" :
+                  "bg-yellow-50 text-yellow-700 border-yellow-200"
                 }`}>
-                  {t}m
+                  {t.minutes}m{t.rushed ? " ⚡" : ""}
                 </span>
               ))}
             </div>

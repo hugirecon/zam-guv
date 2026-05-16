@@ -8,7 +8,7 @@ import {
   Text,
   View,
   StyleSheet,
-  renderToStream,
+  renderToBuffer,
 } from "@react-pdf/renderer";
 
 // Force Node.js runtime — @react-pdf/renderer does not support edge
@@ -346,11 +346,11 @@ export async function GET(
   });
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const stream = await renderToStream(
+  const buffer = await renderToBuffer(
     <CandidateReport candidate={candidate as any} generatedAt={generatedAt} />
   );
 
-  return new Response(stream as unknown as BodyInit, {
+  return new Response(buffer as unknown as BodyInit, {
     headers: {
       "Content-Type": "application/pdf",
       "Content-Disposition": `attachment; filename="${candidate.name.replace(/\s+/g, "_")}_Report.pdf"`,

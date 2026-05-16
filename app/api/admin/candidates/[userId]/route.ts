@@ -88,9 +88,12 @@ export async function GET(
       );
       if (!session) return null;
       const msFromStart = new Date(p.submittedAt!).getTime() - new Date(session.startedAt).getTime();
-      return Math.round(msFromStart / 60000); // minutes
+      const minutes = Math.round(msFromStart / 60000);
+      return { minutes, rushed: minutes >= 25 }; // rushed = submitted in last 5 min of 30-min session
     })
-    .filter((t): t is number => t !== null);
+    .filter((t): t is { minutes: number; rushed: boolean } => t !== null);
+
+  const rushedCount = submissionTimings.filter((t) => t.rushed).length;
 
   return NextResponse.json({
     candidate,
@@ -103,6 +106,7 @@ export async function GET(
       bidRate,
       avgTimePerProposalMs: avgTimePerProposal,
       submissionTimings,
+      rushedCount,
     },
   });
 }
