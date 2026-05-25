@@ -227,8 +227,23 @@ export default function IntroPage() {
             <div className="bg-slate-900 rounded-xl p-6 my-6 border-l-4 border-amber-400">
               <p className="text-amber-400 text-xs font-black uppercase tracking-widest mb-3">📌 KDT Real-World Example</p>
               <p className="text-white leading-relaxed text-sm">
-                A federal agency needs armed security guards at a military installation. They post an RFP on SAM.gov under <strong className="text-amber-300">NAICS 561612</strong> (Security Guards and Patrol Services). KDT sees the listing, makes a bid/no-bid decision based on set-aside eligibility, location, contract value, and capability match. If the decision is &ldquo;pursue,&rdquo; KDT submits a proposal within the deadline. If awarded, KDT is now a <strong className="text-amber-300">prime contractor</strong> on a federal security services contract — a direct revenue vehicle.
+                A federal agency needs armed security guards at a military installation. They post an <strong className="text-amber-300">RFP</strong> on SAM.gov under <strong className="text-amber-300">NAICS 561612</strong> (Security Guards and Patrol Services). KDT sees the listing, makes a bid/no-bid decision based on set-aside eligibility, location, contract value, and capability match. If the decision is &ldquo;pursue,&rdquo; KDT submits a proposal within the deadline. If awarded, KDT is now a <strong className="text-amber-300">prime contractor</strong> on a federal security services contract — a direct revenue vehicle.
               </p>
+            </div>
+
+            {/* IFB vs RFP intro callout */}
+            <div className="bg-blue-50 border border-blue-200 rounded-xl p-5 my-6">
+              <p className="text-blue-900 font-semibold text-sm mb-2">Two solicitation types you&apos;ll encounter most:</p>
+              <div className="space-y-2">
+                <div className="flex gap-3">
+                  <span className="font-black text-blue-800 text-sm w-10 flex-shrink-0">IFB</span>
+                  <p className="text-blue-800 text-sm"><strong>Invitation for Bid</strong> — Sealed-bid process. Lowest responsive price wins, period. No technical scoring, no negotiation. Used when requirements are precisely defined and price is the only differentiator. Common for straightforward services and supply buys.</p>
+                </div>
+                <div className="flex gap-3">
+                  <span className="font-black text-blue-800 text-sm w-10 flex-shrink-0">RFP</span>
+                  <p className="text-blue-800 text-sm"><strong>Request for Proposal</strong> — Full technical proposal plus pricing required. Best-value evaluation — price matters, but so do qualifications, approach, and past performance. Used for complex services. Most of what KDT pursues.</p>
+                </div>
+              </div>
             </div>
 
             {/* Market snapshot visual */}
@@ -587,6 +602,7 @@ export default function IntroPage() {
               </div>
               <div className="divide-y divide-gray-100">
                 {[
+                  ["IFB", "Invitation for Bid. Sealed-bid process — lowest responsive bid wins, period. No technical evaluation, no negotiation, no best-value scoring. Used when requirements are precisely defined and price is the only differentiator. Common for commodity purchases, supplies, and simple services with clear specs. If you see IFB: write a tight scope compliance response and price to win."],
                   ["RFP", "Request for Proposal. Most formal. Full technical proposal + price/cost volumes required. Used for complex services and major acquisitions. This is what you'll see most on Zam.guv."],
                   ["RFQ", "Request for Quotation. Less formal. Price quote + brief capability statement. Typically used for simpler, lower-value buys under the simplified acquisition threshold ($250K)."],
                   ["Sources Sought / RFI", "Market research only — no award will result. Government is checking what companies exist and what they can do. Responding gets you on the CO's radar before the formal RFP drops."],
