@@ -5,16 +5,18 @@ import { getAuthUser } from "@/lib/auth";
 export async function GET(req: NextRequest) {
   try {
     const currentUser = await getAuthUser();
+    if (!currentUser) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     const cohortId = req.nextUrl.searchParams.get("cohortId") || null;
 
-    // All VP users with their scored, submitted proposals
     const users = await prisma.user.findMany({
       where: { role: "vp", ...(cohortId ? { cohortId } : {}) },
       select: {
         id: true,
         name: true,
         proposals: {
-          // Only count proposals from locked ASSESSMENT sessions — not training
           where: { status: "submitted", session: { mode: "assessment", locked: true } },
           select: {
             aiScore: true,
@@ -26,7 +28,6 @@ export async function GET(req: NextRequest) {
     });
 
     const entries = users.map((u) => {
-      // Feature 3: use adminScore if set, else aiScore
       const scoredProposals = u.proposals.filter(
         (p) => p.adminScore != null || p.aiScore != null
       );
@@ -59,7 +60,6 @@ export async function GET(req: NextRequest) {
       };
     });
 
-    // Scored users by composite desc, unscored at bottom
     entries.sort((a, b) => {
       if (a.compositeScore === null && b.compositeScore === null) return 0;
       if (a.compositeScore === null) return 1;
@@ -67,7 +67,6 @@ export async function GET(req: NextRequest) {
       return b.compositeScore - a.compositeScore;
     });
 
-    // Assign ranks — ties share a rank
     let rank = 1;
     const ranked = entries.map((e, i) => {
       if (i > 0 && e.compositeScore !== entries[i - 1].compositeScore) {
